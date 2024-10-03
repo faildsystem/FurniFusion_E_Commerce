@@ -5,6 +5,7 @@ namespace FurniFusion.Models;
 
 public partial class UserAddress
 {
+
     public string UserId { get; set; } = null!;
 
     public string Country { get; set; } = null!;
