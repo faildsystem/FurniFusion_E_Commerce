@@ -22,7 +22,6 @@ namespace FurniFusion.Controllers
         private readonly SignInManager<User> _signInManager;
         private readonly IEmailService _emailService;
 
-
         public AuthController(UserManager<User> userManager, ITokenService tokenService, SignInManager<User> signInManager, IEmailService emailService)
         {
             _userManager = userManager;
