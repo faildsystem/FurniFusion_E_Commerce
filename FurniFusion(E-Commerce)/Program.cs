@@ -2,6 +2,8 @@ using FurniFusion.Data;
 using FurniFusion.Interfaces;
 using FurniFusion.Models;
 using FurniFusion.Services;
+using FurniFusion_E_Commerce_.Interfaces;
+using FurniFusion_E_Commerce_.Services;
 using Hangfire;
 using Hangfire.PostgreSql;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -84,6 +86,8 @@ namespace FurniFusion
             builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
             // Register ChatService
             builder.Services.AddTransient<IEmailService, EmailService>();
+            builder.Services.AddScoped<IPhoneService, PhoneService>();
+            //builder.Services.AddScoped<IAddressService, AddressService>();
 
             builder.Services.AddScoped<ITokenService, TokenService>();
 
