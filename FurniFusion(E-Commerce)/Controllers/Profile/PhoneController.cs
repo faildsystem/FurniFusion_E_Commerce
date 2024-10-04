@@ -20,7 +20,6 @@ namespace FurniFusion_E_Commerce_.Controllers.Profile
             _phoneService = phoneService;
         }
 
-        // Add a phone number
         [HttpPost]
         public async Task<IActionResult> AddPhone([FromBody] CreatePhoneDto phoneDto)
         {
@@ -32,13 +31,7 @@ namespace FurniFusion_E_Commerce_.Controllers.Profile
             if (string.IsNullOrEmpty(userId))
                 return Unauthorized(new { message = "User not found" });
 
-            var phone = new UserPhoneNumber
-            {
-                PhoneNumber = phoneDto.PhoneNumber,
-                UserId = userId,
-                CreatedAt = DateTime.Now, 
-                UpdatedAt = DateTime.Now
-            };
+            var phone = phoneDto.ToUserPhoneNumber(userId);
 
             try
             {
@@ -55,21 +48,20 @@ namespace FurniFusion_E_Commerce_.Controllers.Profile
             }
         }
 
-        // Get all phone numbers by user ID
         [HttpGet]
         public async Task<IActionResult> GetPhones()
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(userId))
-                return Unauthorized();
+                return Unauthorized(new { message = "User not found" });
 
             try
             {
-            var phones = await _phoneService.GetAllPhoneByUserIdAsync(userId);
+                var phones = await _phoneService.GetAllPhoneByUserIdAsync(userId);
 
-            var phoneDtos = phones.Select(p => p.ToPhoneDto()).ToList();
+                var phoneDtos = phones.Select(p => p.ToPhoneDto()).ToList();
 
-            return Ok(phoneDtos);
+                return Ok(phoneDtos);
 
             }
             catch (Exception ex)
@@ -78,63 +70,73 @@ namespace FurniFusion_E_Commerce_.Controllers.Profile
             }
         }
 
-        //[HttpGet("{phoneId}")]
-        //public async Task<IActionResult> GetPhone([FromRoute] int phoneId)
-        //{
-        //    var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        //    if (string.IsNullOrEmpty(userId))
-        //        return Unauthorized();
-
-        //    try
-        //    {
-        //        var phone = await _phoneService.GetPhoneByIdAsync(phoneId, userId);
-
-        //       if (phone == null)
-        //            return NotFound();
-
-        //        return Ok(phone.ToPhoneDto());
-
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return StatusCode(500, new { message = ex.Message });
-        //    }
-        //}
-
-        // Update a phone number
-        [HttpPut("{phoneId}")]
-        public async Task<IActionResult> UpdatePhone(int phoneId, [FromBody] UpdatePhoneDto phoneDto)
+        [HttpGet("{phoneNumber}")]
+        public async Task<IActionResult> GetPhone([FromRoute] string phoneNumber)
         {
-
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(userId))
-                return Unauthorized(new { message = "User not found" });
+                return Unauthorized();
 
+            try
+            {
+                var phone = await _phoneService.GetPhoneAsync(phoneNumber, userId);
 
-            var updatedPhone = await _phoneService.UpdatePhoneAsync(phoneDto, userId);
+                if (phone == null)
+                    return NotFound(new { message = "Phone number not found" });
 
-            if (updatedPhone == null)
-                return NotFound();
+                return Ok(phone.ToPhoneDto());
 
-            return Ok(updatedPhone.ToPhoneDto());
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = ex.Message });
+            }
         }
 
         // Delete a phone number
-        [HttpDelete("{phoneId}")]
-        public async Task<IActionResult> DeletePhone(string phoneNumber)
+        [HttpDelete("{phoneNumber}")]
+        public async Task<IActionResult> DeletePhone([FromRoute] string phoneNumber)
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrEmpty(userId))
                 return Unauthorized(new { message = "User not found" });
+            try
+            {
 
-            var success = await _phoneService.DeletePhoneAsync(phoneNumber, userId);
-            if (!success)
-                return NotFound();
+                var success = await _phoneService.DeletePhoneAsync(phoneNumber, userId);
 
-            return Ok(new { message = "Phone number deleted successfully" });
+                if (!success)
+                    return NotFound(new { message = "Phone number not found" });
+
+                return Ok(new { message = "Phone number deleted successfully" });
+            }
+            catch (Exception ex)
+            {
+
+                return StatusCode(500, new { message = ex.Message });
+            }
+
         }
+
+        //// Update a phone number
+        //[HttpPut("{phoneNumber}")]
+        //public async Task<IActionResult> UpdatePhone([FromRoute] string phoneNumber, [FromBody] UpdatePhoneDto updatePhoneDto)
+        //{
+        //    if (!ModelState.IsValid)
+        //        return BadRequest(ModelState);
+
+        //    var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        //    if (string.IsNullOrEmpty(userId))
+        //        return Unauthorized(new { message = "User not found" });
+
+
+        //    var updatedPhone = await _phoneService.UpdatePhoneAsync(phoneNumber, userId, updatePhoneDto);
+
+        //    if (updatedPhone == null)
+        //        return NotFound(new { message = "Phone number not found" });
+
+        //    return Ok(updatedPhone.ToPhoneDto());
+        //}
+
     }
 }
