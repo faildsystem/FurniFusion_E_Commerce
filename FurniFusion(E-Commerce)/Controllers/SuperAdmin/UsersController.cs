@@ -1,5 +1,4 @@
-﻿using FurniFusion.Dtos.SuperAdmin;
-using FurniFusion.Queries;
+﻿using FurniFusion.Queries;
 using FurniFusion.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -7,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using FurniFusion.Interfaces;
 using FurniFusion.Dtos.SuperAdmin.User;
+using FurniFusion.Mappers;
 
 namespace FurniFusion.Controllers
 {
@@ -53,16 +53,7 @@ namespace FurniFusion.Controllers
 
             var usersList = await users.Skip(skipNumber).Take(query.PageSize).ToListAsync();
 
-            var usersDto = usersList.Select(user => new UserDto
-            {
-                Id = user.Id,
-                Email = user.Email,
-                UserName = user.UserName,
-                FirstName = user.FirstName,
-                LastName = user.LastName,
-                PhoneNumber = user.PhoneNumber,
-                Roles = _userManager.GetRolesAsync(user).Result.ToList()
-            }).ToList();
+            var usersDto = usersList.Select(user => user.ToUserDto(_userManager)).ToList();
 
             return Ok(new { totalItems, users = usersDto });
 

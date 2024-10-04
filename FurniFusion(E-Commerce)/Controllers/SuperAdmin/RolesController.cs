@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using FurniFusion.Interfaces;
 using FurniFusion.Dtos.SuperAdmin.Role;
+using FurniFusion.Mappers;
 
 namespace FurniFusion.Controllers
 {
@@ -29,8 +30,12 @@ namespace FurniFusion.Controllers
         public async Task<IActionResult> GetRoles()
         {
             var roles = await _roleManager.Roles.ToListAsync();
+
+            var rolesDto = roles.Select(role => role.ToRoleDto()).ToList();
+
             var totalItems = roles.Count;
-            return Ok(new { totalItems, roles });
+
+            return Ok(new { totalItems, rolesDto });
         }
 
         [HttpPost("createRole")]

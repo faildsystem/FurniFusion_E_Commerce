@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace FurniFusion.Models;
+﻿namespace FurniFusion.Models;
 
 public partial class Discount
 {
@@ -9,13 +6,13 @@ public partial class Discount
 
     public string DiscountCode { get; set; } = null!;
 
-    public decimal DiscountValue { get; set; }
+    public decimal? DiscountValue { get; set; }
 
     public int? DiscountUnitId { get; set; }
 
-    public DateOnly ValidFrom { get; set; }
+    public DateOnly? ValidFrom { get; set; }
 
-    public DateOnly ValidTo { get; set; }
+    public DateOnly? ValidTo { get; set; }
 
     public bool? IsActive { get; set; }
 

@@ -1,6 +1,7 @@
-﻿using FurniFusion.Interfaces;
+﻿using FurniFusion.Dtos.ProductManager.Product;
+using FurniFusion.Interfaces;
+using FurniFusion.Mappers;
 using FurniFusion.Queries;
-using FurniFusion.Dtos.ProductManager.Product;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -23,11 +24,12 @@ namespace FurniFusion.Controllers
         public async Task<IActionResult> GetProducts([FromQuery] ProductFilter filter)
         {
             var Products = await _productService.GetAllProductsAsync(filter);
+
+            var productsDto = Products.Select(p => p.ToProductDto()).ToList();
+
             var TotalProducts = Products.Count;
 
-
-
-            return Ok(new { TotalProducts, Products });
+            return Ok(new { TotalProducts, productsDto });
         }
 
         [HttpPost("createProduct")]
@@ -45,7 +47,7 @@ namespace FurniFusion.Controllers
 
                 var product = await _productService.CreateProductAsync(productDto, creatorId!);
 
-                return Ok(product);
+                return Ok(product.ToProductDto());
 
             }
             catch (Exception e)
@@ -69,7 +71,7 @@ namespace FurniFusion.Controllers
 
                 var product = await _productService.UpdateProductAsync(productDto, updatorId!);
 
-                return Ok(product);
+                return Ok(product.ToProductDto());
 
             }
             catch (Exception e)

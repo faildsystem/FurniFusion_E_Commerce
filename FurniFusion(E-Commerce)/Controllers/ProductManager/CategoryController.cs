@@ -1,5 +1,6 @@
 ﻿using FurniFusion.Dtos.ProductManager.Category;
 using FurniFusion.Interfaces;
+using FurniFusion.Mappers;
 using FurniFusion.Queries;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -26,9 +27,11 @@ namespace FurniFusion.Controllers
             {
                 var categories = await _CategoryService.GetAllCategoriesAsync();
 
+                var categoriesDto = categories.Select(c => c.ToCategoryDto()).ToList();
+
                 var totalItems = categories.Count();
 
-                return Ok(new { totalItems, categories });
+                return Ok(new { totalItems, categoriesDto });
 
             }
             catch (Exception e)
@@ -51,7 +54,7 @@ namespace FurniFusion.Controllers
 
                 var category = await _CategoryService.CreateCategoryAsync(categoryDto, creatorId!);
 
-                return Ok(category);
+                return Ok(category.ToCategoryDto());
 
             }
             catch (Exception e)
@@ -74,7 +77,7 @@ namespace FurniFusion.Controllers
 
                 var category = await _CategoryService.UpdateCategoryAsync(categoryDto, updatorId!);
 
-                return Ok(category);
+                return Ok(category.ToCategoryDto());
 
             }
             catch (Exception e)
