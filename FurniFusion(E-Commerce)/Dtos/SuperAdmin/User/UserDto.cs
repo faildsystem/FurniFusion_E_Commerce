@@ -1,4 +1,4 @@
-﻿namespace FurniFusion.Dtos.SuperAdmin
+﻿namespace FurniFusion.Dtos.SuperAdmin.User
 {
     public class UserDto
     {

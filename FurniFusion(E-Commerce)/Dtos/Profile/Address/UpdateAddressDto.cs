@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace FurniFusion_E_Commerce_.Dtos.Profile.Address
+namespace FurniFusion.Dtos.Profile.Address
 {
     public class UpdateAddressDto
     {

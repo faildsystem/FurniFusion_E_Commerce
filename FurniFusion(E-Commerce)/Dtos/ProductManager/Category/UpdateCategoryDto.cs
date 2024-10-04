@@ -1,8 +1,8 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace FurniFusion.Dtos.ProductManager
+namespace FurniFusion.Dtos.ProductManager.Category
 {
-    public class UpdateCategoryDto 
+    public class UpdateCategoryDto
     {
         [Required]
         public int? CategoryId { get; set; }

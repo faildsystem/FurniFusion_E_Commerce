@@ -1,7 +1,7 @@
 ﻿using FurniFusion.Models;
-using FurniFusion_E_Commerce_.Dtos.Profile.Phone;
+using FurniFusion.Dtos.Profile.Phone;
 
-namespace FurniFusion_E_Commerce_.Mappers
+namespace FurniFusion.Mappers
 {
     public static class PhoneMapper
     {

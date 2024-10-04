@@ -10,7 +10,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace FurniFusion_E_Commerce_.Migrations
+namespace FurniFusion.Migrations
 {
     [DbContext(typeof(FurniFusionDbContext))]
     [Migration("20241003132603_Identity")]

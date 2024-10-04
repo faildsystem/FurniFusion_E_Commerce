@@ -2,8 +2,6 @@ using FurniFusion.Data;
 using FurniFusion.Interfaces;
 using FurniFusion.Models;
 using FurniFusion.Services;
-using FurniFusion_E_Commerce_.Interfaces;
-using FurniFusion_E_Commerce_.Services;
 using Hangfire;
 using Hangfire.PostgreSql;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -90,8 +88,9 @@ namespace FurniFusion
             //builder.Services.AddScoped<IAddressService, AddressService>();
 
             builder.Services.AddScoped<ITokenService, TokenService>();
+            builder.Services.AddScoped<ICategoryService, CategoryService>();
+            builder.Services.AddScoped<IProductService, ProductService>();
 
-            //builder.Services.AddScoped<IProductManagerRepository, ProductManagerRepository>();
 
 
 

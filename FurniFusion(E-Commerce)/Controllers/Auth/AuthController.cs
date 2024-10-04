@@ -1,4 +1,5 @@
-﻿using FurniFusion.Dtos;
+﻿using FurniFusion;
+using FurniFusion.Dtos;
 using FurniFusion.Dtos.Auth;
 using FurniFusion.Interfaces;
 using FurniFusion.Models;
@@ -11,10 +12,10 @@ using System.Net;
 using System.Text;
 using System.Transactions;
 
-namespace FurniFusion.Controllers
+namespace FurniFusion.Controllers.Auth
 {
     [ApiController]
-    [Route(("api/[controller]"))]
+    [Route("api/[controller]")]
     public class AuthController : ControllerBase
     {
         private readonly UserManager<User> _userManager;

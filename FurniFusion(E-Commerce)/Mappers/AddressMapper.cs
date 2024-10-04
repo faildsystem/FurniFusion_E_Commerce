@@ -1,7 +1,7 @@
 ﻿using FurniFusion.Models;
-using FurniFusion_E_Commerce_.Dtos.Profile.Address;
+using FurniFusion.Dtos.Profile.Address;
 
-namespace FurniFusion_E_Commerce_.Mappers
+namespace FurniFusion.Mappers
 {
     public static class AddressMapper
     {

@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace FurniFusion_E_Commerce_.Dtos.Profile.Phone
+namespace FurniFusion.Dtos.Profile.Phone
 {
     public class CreatePhoneDto
     {

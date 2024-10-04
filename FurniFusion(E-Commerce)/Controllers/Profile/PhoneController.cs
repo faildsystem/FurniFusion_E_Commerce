@@ -1,12 +1,12 @@
 ﻿using FurniFusion.Models;
-using FurniFusion_E_Commerce_.Dtos.Profile.Phone;
-using FurniFusion_E_Commerce_.Interfaces;
-using FurniFusion_E_Commerce_.Mappers;
+using FurniFusion.Dtos.Profile.Phone;
+using FurniFusion.Interfaces;
+using FurniFusion.Mappers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
-namespace FurniFusion_E_Commerce_.Controllers.Profile
+namespace FurniFusion.Controllers.Profile
 {
     [Authorize]
     [ApiController]

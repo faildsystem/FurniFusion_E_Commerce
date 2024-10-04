@@ -7,7 +7,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
 
-namespace FurniFusion_E_Commerce_.Migrations
+namespace FurniFusion.Migrations
 {
     /// <inheritdoc />
     public partial class Identity : Migration

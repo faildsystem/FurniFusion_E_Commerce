@@ -9,7 +9,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace FurniFusion_E_Commerce_.Migrations
+namespace FurniFusion.Migrations
 {
     [DbContext(typeof(FurniFusionDbContext))]
     partial class FurniFusionDbContextModelSnapshot : ModelSnapshot
@@ -1213,6 +1213,10 @@ namespace FurniFusion_E_Commerce_.Migrations
                         .HasDefaultValue(false)
                         .HasColumnName("is_primary_address");
 
+                    b.Property<int>("AddressId")
+                        .HasColumnType("integer")
+                        .HasColumnName("address_id");
+
                     b.Property<string>("City")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -1255,7 +1259,7 @@ namespace FurniFusion_E_Commerce_.Migrations
                         .HasColumnName("updated_at")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
-                    b.HasKey("UserId", "IsPrimaryAddress")
+                    b.HasKey("UserId", "IsPrimaryAddress", "AddressId")
                         .HasName("User_Address_pkey");
 
                     b.ToTable("User_Address", (string)null);
@@ -1428,13 +1432,13 @@ namespace FurniFusion_E_Commerce_.Migrations
                     b.HasData(
                         new
                         {
-                            Id = "ddc38528-b933-4803-bf28-0e67afe094aa",
+                            Id = "9a61559d-05f9-4b91-bedf-f8a011c88868",
                             Name = "superAdmin",
                             NormalizedName = "SUPERADMIN"
                         },
                         new
                         {
-                            Id = "55f49d87-3fd8-45be-a22b-9b90611036d7",
+                            Id = "855357a2-8152-48fa-8c6c-0d4cfe03ee19",
                             Name = "user",
                             NormalizedName = "USER"
                         });

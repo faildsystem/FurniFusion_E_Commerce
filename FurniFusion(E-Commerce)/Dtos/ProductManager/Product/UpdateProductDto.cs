@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace FurniFusion.Dtos.ProductManager
+namespace FurniFusion.Dtos.ProductManager.Product
 {
     public class UpdateProductDto
     {
@@ -15,7 +15,7 @@ namespace FurniFusion.Dtos.ProductManager
 
         public decimal? Weight { get; set; }
 
-        public string? Color { get; set; }
+        public List<string>? Colors { get; set; }
 
         public string? Description { get; set; }
 

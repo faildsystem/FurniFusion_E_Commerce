@@ -5,6 +5,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>FurniFusion_E_Commerce_</RootNamespace>
+    <UserSecretsId>df3103b4-e808-462b-9925-de1a3736619b</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>

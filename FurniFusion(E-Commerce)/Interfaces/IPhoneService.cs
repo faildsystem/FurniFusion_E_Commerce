@@ -1,7 +1,7 @@
 ﻿using FurniFusion.Models;
-using FurniFusion_E_Commerce_.Dtos.Profile.Phone;
+using FurniFusion.Dtos.Profile.Phone;
 
-namespace FurniFusion_E_Commerce_.Interfaces
+namespace FurniFusion.Interfaces
 {
     public interface IPhoneService
     {

@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace FurniFusion.Dtos.SuperAdmin
+namespace FurniFusion.Dtos.SuperAdmin.Role
 {
     public class CreateOrDeleteRoleDto
     {
