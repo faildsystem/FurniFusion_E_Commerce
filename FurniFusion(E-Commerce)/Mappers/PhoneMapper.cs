@@ -13,5 +13,16 @@ namespace FurniFusion.Mappers
             };
         }
 
+        public static UserPhoneNumber ToUserPhoneNumber(this CreatePhoneDto phoneDto, string userId)
+        {
+            return new UserPhoneNumber
+            {
+                PhoneNumber = phoneDto.PhoneNumber,
+                UserId = userId,
+                CreatedAt = DateTime.Now,
+                UpdatedAt = DateTime.Now
+            };
+        }
+
     }
 }

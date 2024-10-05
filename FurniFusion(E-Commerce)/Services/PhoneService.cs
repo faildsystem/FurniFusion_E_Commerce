@@ -17,94 +17,69 @@ namespace FurniFusion.Services
 
         public async Task<UserPhoneNumber> AddPhoneAsync(UserPhoneNumber phone, string userId)
         {
-            try
-            {
-                var existingPhone = await _context.UserPhoneNumbers
-                                  .FirstOrDefaultAsync(p => p.PhoneNumber == phone.PhoneNumber && p.UserId == userId);
 
-                if (existingPhone != null)
-                    throw new Exception("The phone number already exists for this user.");
+            var existingPhone = await _context.UserPhoneNumbers
+                              .FirstOrDefaultAsync(p => p.PhoneNumber == phone.PhoneNumber && p.UserId == userId);
 
-                var createdPhone = await _context.UserPhoneNumbers.AddAsync(phone);
+            if (existingPhone != null)
+                throw new Exception("The phone number already exists for this user.");
 
-                await _context.SaveChangesAsync();
-                return createdPhone.Entity;
-            }
-            catch (Exception ex)
-            {
-                throw new Exception("An error occurred while adding the phone number.", ex);
-            }
+            var createdPhone = await _context.UserPhoneNumbers.AddAsync(phone);
+
+            await _context.SaveChangesAsync();
+            return createdPhone.Entity;
+
         }
 
         public async Task<bool> DeletePhoneAsync(string phoneNumber, string userId)
         {
-            try
-            {
-                var phone = await _context.UserPhoneNumbers.FirstOrDefaultAsync(p => p.UserId == userId && p.PhoneNumber == phoneNumber);
 
-                if (phone == null)
-                    return false;
+            var phone = await _context.UserPhoneNumbers.FirstOrDefaultAsync(p => p.UserId == userId && p.PhoneNumber == phoneNumber);
 
-                _context.UserPhoneNumbers.Remove(phone);
-                await _context.SaveChangesAsync();
+            if (phone == null)
+                return false;
 
-                return true;
-            }
-            catch (Exception ex)
-            {
-                throw new Exception("An error occurred while deleting the phone number.", ex);
-            }
+            _context.UserPhoneNumbers.Remove(phone);
+            await _context.SaveChangesAsync();
+
+            return true;
+
         }
 
         public async Task<List<UserPhoneNumber>> GetAllPhoneByUserIdAsync(string userId)
         {
-            try
-            {
-                var phones = await _context.UserPhoneNumbers.Where(p => p.UserId == userId).ToListAsync();
-                return phones ?? new List<UserPhoneNumber>();
-            }
-            catch (Exception ex)
-            {
-                throw new Exception("An error occurred while getting all phone numbers.", ex);
-            }
+
+            var phones = await _context.UserPhoneNumbers.Where(p => p.UserId == userId).ToListAsync();
+            return phones ?? new List<UserPhoneNumber>();
+
         }
 
-        //public async Task<UserPhoneNumber?> GetPhoneAsync(int phoneId, string userId)
-        //{
-        //    try
-        //    {
-        //        var phone = await _context.UserPhoneNumbers.FirstOrDefaultAsync(p => p.UserId == userId && p.PhoneNumber == p);
-
-        //        if (phone == null)
-        //            return null;
-
-        //        return phone;
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        throw new Exception("An error occurred while getting the phone number.", ex);
-        //    }
-        //}
-
-        public async Task<UserPhoneNumber?> UpdatePhoneAsync(UpdatePhoneDto phoneDto, string userId)
+        public async Task<UserPhoneNumber?> GetPhoneAsync(string phoneNumber, string userId)
         {
-            try
-            {
-                var wantedPhone = await _context.UserPhoneNumbers.FirstOrDefaultAsync(p => p.UserId == userId && p.PhoneNumber == phoneDto.PhoneNumber);
 
-                if (wantedPhone == null)
-                    return null;
+            var phone = await _context.UserPhoneNumbers.FirstOrDefaultAsync(p => p.UserId == userId && p.PhoneNumber == phoneNumber);
 
-                wantedPhone.PhoneNumber = phoneDto.PhoneNumber;
-                wantedPhone.UpdatedAt = DateTime.Now;
+            if (phone == null)
+                return null;
 
-                await _context.SaveChangesAsync();
-                return wantedPhone;
-            }
-            catch (Exception ex)
-            {
-                throw new Exception("An error occurred while updating the phone number.", ex);
-            }
+            return phone;
+
         }
+
+        //public async Task<UserPhoneNumber?> UpdatePhoneAsync(string phoneNumber, string userId, UpdatePhoneDto updatePhoneDto)
+        //{
+
+        //    var wantedPhone = await _context.UserPhoneNumbers.FirstOrDefaultAsync(p => p.UserId == userId && p.PhoneNumber == phoneNumber);
+
+        //    if (wantedPhone == null)
+        //        return null;
+
+        //    wantedPhone.PhoneNumber = updatePhoneDto.PhoneNumber ;
+        //    wantedPhone.UpdatedAt = DateTime.Now;
+
+        //    await _context.SaveChangesAsync();
+        //    return wantedPhone;
+
+        //}
     }
 }
