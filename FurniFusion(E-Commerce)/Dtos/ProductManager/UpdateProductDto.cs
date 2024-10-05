@@ -13,6 +13,8 @@ namespace FurniFusion.Dtos.ProductManager
 
         public string? Dimensions { get; set; }
 
+        public decimal? AverageRating { get; set; }
+
         public decimal? Weight { get; set; }
 
         public string? Color { get; set; }

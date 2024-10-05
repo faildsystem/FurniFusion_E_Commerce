@@ -1213,6 +1213,9 @@ namespace FurniFusion_E_Commerce_.Migrations
                         .HasDefaultValue(false)
                         .HasColumnName("is_primary_address");
 
+                    b.Property<int>("AddressId")
+                        .HasColumnType("integer");
+
                     b.Property<string>("City")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -1428,13 +1431,13 @@ namespace FurniFusion_E_Commerce_.Migrations
                     b.HasData(
                         new
                         {
-                            Id = "ddc38528-b933-4803-bf28-0e67afe094aa",
+                            Id = "08b6631e-ff6f-433e-8bf7-870f2f990911",
                             Name = "superAdmin",
                             NormalizedName = "SUPERADMIN"
                         },
                         new
                         {
-                            Id = "55f49d87-3fd8-45be-a22b-9b90611036d7",
+                            Id = "ad9285a2-66f2-4f17-a50b-fd020a19def8",
                             Name = "user",
                             NormalizedName = "USER"
                         });
