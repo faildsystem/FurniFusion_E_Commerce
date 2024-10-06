@@ -2,6 +2,8 @@ using FurniFusion.Data;
 using FurniFusion.Interfaces;
 using FurniFusion.Models;
 using FurniFusion.Services;
+using FurniFusion.Interfaces;
+using FurniFusion.Services;
 using Hangfire;
 using Hangfire.PostgreSql;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -86,7 +88,7 @@ namespace FurniFusion
             builder.Services.AddTransient<IEmailService, EmailService>();
             builder.Services.AddScoped<IPhoneService, PhoneService>();
             builder.Services.AddScoped<IReviewService, ReviewService>();
-            //builder.Services.AddScoped<IAddressService, AddressService>();
+            builder.Services.AddScoped<IAddressService, AddressService>();
 
             builder.Services.AddScoped<ITokenService, TokenService>();
             builder.Services.AddScoped<ICategoryService, CategoryService>();

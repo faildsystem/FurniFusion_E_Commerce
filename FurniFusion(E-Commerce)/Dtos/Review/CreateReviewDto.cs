@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace FurniFusion_E_Commerce_.Dtos.Review
+namespace FurniFusion.Dtos.Review
 {
     public class CreateReviewDto
     {

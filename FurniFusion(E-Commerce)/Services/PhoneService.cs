@@ -1,6 +1,5 @@
 ﻿using FurniFusion.Data;
 using FurniFusion.Models;
-using FurniFusion.Dtos.Profile.Phone;
 using FurniFusion.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
@@ -15,71 +14,48 @@ namespace FurniFusion.Services
             _context = context;
         }
 
-        public async Task<UserPhoneNumber> AddPhoneAsync(UserPhoneNumber phone, string userId)
+        public async Task<ServiceResult<UserPhoneNumber>> AddPhoneAsync(UserPhoneNumber phone, string userId)
         {
-
             var existingPhone = await _context.UserPhoneNumbers
                               .FirstOrDefaultAsync(p => p.PhoneNumber == phone.PhoneNumber && p.UserId == userId);
 
             if (existingPhone != null)
-                throw new Exception("The phone number already exists for this user.");
+                return ServiceResult<UserPhoneNumber>.ErrorResult("The phone number already exists for this user.", 400);
 
             var createdPhone = await _context.UserPhoneNumbers.AddAsync(phone);
-
             await _context.SaveChangesAsync();
-            return createdPhone.Entity;
 
+            return ServiceResult<UserPhoneNumber>.SuccessResult(createdPhone.Entity, "Phone added successfully.");
         }
 
-        public async Task<bool> DeletePhoneAsync(string phoneNumber, string userId)
+        public async Task<ServiceResult<bool>> DeletePhoneAsync(string phoneNumber, string userId)
         {
-
             var phone = await _context.UserPhoneNumbers.FirstOrDefaultAsync(p => p.UserId == userId && p.PhoneNumber == phoneNumber);
 
             if (phone == null)
-                return false;
+                return ServiceResult<bool>.ErrorResult("Phone number not found", 404);
 
             _context.UserPhoneNumbers.Remove(phone);
             await _context.SaveChangesAsync();
 
-            return true;
-
+            return ServiceResult<bool>.SuccessResult(true, "Phone number deleted successfully.");
         }
 
-        public async Task<List<UserPhoneNumber>> GetAllPhoneByUserIdAsync(string userId)
+        public async Task<ServiceResult<List<UserPhoneNumber>>> GetAllPhoneByUserIdAsync(string userId)
         {
-
             var phones = await _context.UserPhoneNumbers.Where(p => p.UserId == userId).ToListAsync();
-            return phones ?? new List<UserPhoneNumber>();
 
+            return ServiceResult<List<UserPhoneNumber>>.SuccessResult(phones, "Phone numbers retrieved successfully.");
         }
 
-        public async Task<UserPhoneNumber?> GetPhoneAsync(string phoneNumber, string userId)
+        public async Task<ServiceResult<UserPhoneNumber?>> GetPhoneAsync(string phoneNumber, string userId)
         {
-
             var phone = await _context.UserPhoneNumbers.FirstOrDefaultAsync(p => p.UserId == userId && p.PhoneNumber == phoneNumber);
 
             if (phone == null)
-                return null;
+                return ServiceResult<UserPhoneNumber?>.ErrorResult("Phone number not found", 404);
 
-            return phone;
-
+            return ServiceResult<UserPhoneNumber?>.SuccessResult(phone, "Phone number retrieved successfully.");
         }
-
-        //public async Task<UserPhoneNumber?> UpdatePhoneAsync(string phoneNumber, string userId, UpdatePhoneDto updatePhoneDto)
-        //{
-
-        //    var wantedPhone = await _context.UserPhoneNumbers.FirstOrDefaultAsync(p => p.UserId == userId && p.PhoneNumber == phoneNumber);
-
-        //    if (wantedPhone == null)
-        //        return null;
-
-        //    wantedPhone.PhoneNumber = updatePhoneDto.PhoneNumber ;
-        //    wantedPhone.UpdatedAt = DateTime.Now;
-
-        //    await _context.SaveChangesAsync();
-        //    return wantedPhone;
-
-        //}
     }
 }

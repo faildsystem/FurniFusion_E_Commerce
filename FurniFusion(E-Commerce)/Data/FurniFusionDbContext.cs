@@ -824,10 +824,11 @@ public partial class FurniFusionDbContext : IdentityDbContext<User>
 
         modelBuilder.Entity<UserAddress>(entity =>
         {
-            entity.HasKey(e => new { e.UserId, e.IsPrimaryAddress }).HasName("User_Address_pkey");
+            entity.HasKey(e => e.AddressId).HasName("User_Address_pkey");
 
             entity.ToTable("User_Address");
 
+            entity.Property(e => e.AddressId).HasColumnName("address_id");
             entity.Property(e => e.UserId).HasColumnName("user_id");
             entity.Property(e => e.IsPrimaryAddress)
                 .HasDefaultValue(false)
