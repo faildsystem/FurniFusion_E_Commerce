@@ -1,4 +1,5 @@
-﻿using FurniFusion.Models;
+﻿using FurniFusion.Dtos.CartItem;
+using FurniFusion.Models;
 
 namespace FurniFusion.Models
 {
@@ -19,6 +20,7 @@ namespace FurniFusion.Models
             return new ServiceResult<T> { Success = false, Message = message, StatusCode = statusCode };
         }
 
+        
     }
 
 }

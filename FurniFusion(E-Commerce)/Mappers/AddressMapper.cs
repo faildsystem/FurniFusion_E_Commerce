@@ -19,7 +19,7 @@ namespace FurniFusion.Mappers
             };
         }
 
-        public static UserAddress ToUserAddress(this AddAddressDto address, string userId)
+        public static UserAddress ToUserAddress(this CreateAddressDto address, string userId)
         {
             return new UserAddress
             {

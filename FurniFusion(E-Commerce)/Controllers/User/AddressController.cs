@@ -77,7 +77,7 @@ namespace FurniFusion.Controllers.Profile
         }
 
         [HttpPost]
-        public async Task<IActionResult> AddAddress([FromBody] AddAddressDto addAddressDto)
+        public async Task<IActionResult> AddAddress([FromBody] CreateAddressDto addAddressDto)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);

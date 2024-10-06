@@ -2,7 +2,7 @@
 
 namespace FurniFusion.Dtos.Profile.Address
 {
-    public class AddAddressDto
+    public class CreateAddressDto
     {
         [Required]
         public string? Country { get; set; }
