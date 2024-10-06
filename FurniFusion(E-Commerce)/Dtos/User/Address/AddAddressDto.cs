@@ -18,9 +18,5 @@ namespace FurniFusion.Dtos.Profile.Address
 
         public bool IsPrimaryAddress { get; set; }
 
-        public AddAddressDto()
-        {
-            IsPrimaryAddress = false;
-        }
     }
 }

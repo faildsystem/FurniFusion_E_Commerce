@@ -9,13 +9,29 @@ namespace FurniFusion.Mappers
         {
             return new AddressDto
             {
-                //AddressId = address.AddressId,
+                AddressId = address.AddressId,
                 Country = address.Country,
                 City = address.City,
                 State = address.State,
                 Street = address.Street,
                 PostalCode = address.PostalCode,
                 IsPrimaryAddress = address.IsPrimaryAddress
+            };
+        }
+
+        public static UserAddress ToUserAddress(this AddAddressDto address, string userId)
+        {
+            return new UserAddress
+            {
+                UserId = userId,
+                Country = address.Country!,
+                City = address.City!,
+                State = address.State!,
+                Street = address.Street!,
+                PostalCode = address.PostalCode!,
+                IsPrimaryAddress = address.IsPrimaryAddress,
+                CreatedAt = DateTime.Now,
+                UpdatedAt = DateTime.Now,
             };
         }
     }
