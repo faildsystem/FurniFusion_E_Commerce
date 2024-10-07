@@ -16,9 +16,6 @@ namespace FurniFusion.Controllers.Profile
         private readonly IPhoneService _phoneService;
 
 
-
-
-
         public PhoneController(IPhoneService phoneService)
         {
             _phoneService = phoneService;
@@ -39,12 +36,12 @@ namespace FurniFusion.Controllers.Profile
 
             try
             {
-                var createdPhone = await _phoneService.AddPhoneAsync(phone, userId);
+                var result = await _phoneService.AddPhoneAsync(phone, userId);
 
-                if (createdPhone == null)
-                    return BadRequest(new { message = "Failed to add phone number" });
+                if (!result.Success)
+                    return StatusCode(result.StatusCode, new { message = result.Message });
 
-                return Ok(createdPhone.ToPhoneDto());
+                return Ok(result.Data.ToPhoneDto());
             }
             catch (Exception ex)
             {
@@ -61,11 +58,12 @@ namespace FurniFusion.Controllers.Profile
 
             try
             {
-                var phones = await _phoneService.GetAllPhoneByUserIdAsync(userId);
+                var result = await _phoneService.GetAllPhoneByUserIdAsync(userId);
 
-                var phoneDtos = phones.Select(p => p.ToPhoneDto()).ToList();
+                if (!result.Success)
+                    return StatusCode(result.StatusCode, new { message = result.Message });
 
-                return Ok(phoneDtos);
+                return Ok(result.Data.Select(p => p.ToPhoneDto()).ToList());
 
             }
             catch (Exception ex)
@@ -83,12 +81,12 @@ namespace FurniFusion.Controllers.Profile
 
             try
             {
-                var phone = await _phoneService.GetPhoneAsync(phoneNumber, userId);
+                var result = await _phoneService.GetPhoneAsync(phoneNumber, userId);
 
-                if (phone == null)
-                    return NotFound(new { message = "Phone number not found" });
+                if (!result.Success)
+                    return StatusCode(result.StatusCode, new { message = result.Message });
 
-                return Ok(phone.ToPhoneDto());
+                return Ok(result.Data?.ToPhoneDto());
 
             }
             catch (Exception ex)
@@ -107,12 +105,12 @@ namespace FurniFusion.Controllers.Profile
             try
             {
 
-                var success = await _phoneService.DeletePhoneAsync(phoneNumber, userId);
+                var result = await _phoneService.DeletePhoneAsync(phoneNumber, userId);
 
-                if (!success)
-                    return NotFound(new { message = "Phone number not found" });
+                if (!result.Success)
+                    return StatusCode(result.StatusCode, new { message = result.Message });
 
-                return Ok(new { message = "Phone number deleted successfully" });
+                return Ok(new { message = result.Message });
             }
             catch (Exception ex)
             {
@@ -121,26 +119,6 @@ namespace FurniFusion.Controllers.Profile
             }
 
         }
-
-        //// Update a phone number
-        //[HttpPut("{phoneNumber}")]
-        //public async Task<IActionResult> UpdatePhone([FromRoute] string phoneNumber, [FromBody] UpdatePhoneDto updatePhoneDto)
-        //{
-        //    if (!ModelState.IsValid)
-        //        return BadRequest(ModelState);
-
-        //    var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        //    if (string.IsNullOrEmpty(userId))
-        //        return Unauthorized(new { message = "User not found" });
-
-
-        //    var updatedPhone = await _phoneService.UpdatePhoneAsync(phoneNumber, userId, updatePhoneDto);
-
-        //    if (updatedPhone == null)
-        //        return NotFound(new { message = "Phone number not found" });
-
-        //    return Ok(updatedPhone.ToPhoneDto());
-        //}
 
     }
 }

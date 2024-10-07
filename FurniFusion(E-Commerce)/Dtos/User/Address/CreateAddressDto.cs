@@ -2,7 +2,7 @@
 
 namespace FurniFusion.Dtos.Profile.Address
 {
-    public class AddAddressDto
+    public class CreateAddressDto
     {
         [Required]
         public string? Country { get; set; }
@@ -18,9 +18,5 @@ namespace FurniFusion.Dtos.Profile.Address
 
         public bool IsPrimaryAddress { get; set; }
 
-        public AddAddressDto()
-        {
-            IsPrimaryAddress = false;
-        }
     }
 }

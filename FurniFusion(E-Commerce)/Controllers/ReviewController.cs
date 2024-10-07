@@ -25,12 +25,12 @@ namespace FurniFusion.Controllers
         {
             try
             {
-                var review = await _reviewService.GetReviewAsync(reviewId);
+                var result = await _reviewService.GetReviewAsync(reviewId);
 
-                if (review == null)
-                    return NotFound(new { message = "Review not found" });
+                if (!result.Success)
+                    return StatusCode(result.StatusCode, new { message = result.Message });
 
-                return Ok(review.ToReviewDto());
+                return Ok(result.Data!.ToReviewDto());
 
             }
             catch (Exception ex)
@@ -45,12 +45,12 @@ namespace FurniFusion.Controllers
         {
             try
             {
-                var reviews = await _reviewService.GetProductReviewsAsync(productId);
+                var result = await _reviewService.GetProductReviewsAsync(productId);
 
-                if (reviews == null)
-                    return NotFound(new { message = "Product not found" });
+                if (!result.Success)
+                    return StatusCode(result.StatusCode, new { message = result.Message });
 
-                return Ok(reviews.Select(r => r.ToReviewDto()));
+                return Ok(result.Data.Select(r => r.ToReviewDto()));
 
             }
             catch (Exception ex)
@@ -76,20 +76,48 @@ namespace FurniFusion.Controllers
 
             try
             {
-                var CreatedReview = await _reviewService.AddReviewAsync(review);
+                var result = await _reviewService.AddReviewAsync(review);
 
-                if (CreatedReview == null)
-                    return BadRequest(new { message = "Failed to add review" });
+                if (!result.Success)
+                    return StatusCode(result.StatusCode, new { message = result.Message });
 
-                return CreatedAtAction(nameof(AddReview), new { id = CreatedReview.ReviewId }, CreatedReview.ToReviewDto());
+                return CreatedAtAction(nameof(AddReview), new { id = result.Data!.ReviewId }, result.Data.ToReviewDto());
             }
             catch (Exception ex)
             {
 
-                return StatusCode(500, ex.Message);
+                return StatusCode(500, new { message = ex.Message });
             }
         }
 
+
+        [HttpPut("{reviewId}")]
+        [Authorize(Roles = "user")]
+        public async Task<IActionResult> UpdateReview([FromRoute] int reviewId, [FromBody] UpdateReviewDto reviewDto)
+        {
+
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (string.IsNullOrEmpty(userId))
+                return BadRequest(ModelState);
+
+            try
+            {
+                var result = await _reviewService.UpdateReviewasync(reviewDto, reviewId, userId);
+
+                if (!result.Success)
+                    return StatusCode(result.StatusCode, new { message = result.Message });
+
+                return Ok(result.Data!.ToReviewDto());
+            }
+            catch(Exception ex)
+            {
+                return StatusCode(500, new { message = ex.Message });
+            }
+        }
 
         [Authorize(Roles = "user,superAdmin")]
         [HttpDelete("{reviewId}")]
@@ -105,11 +133,11 @@ namespace FurniFusion.Controllers
 
             try
             {
-                // Proceed with deletion (you'll need to implement this in your service)
-                var isDeleted = await _reviewService.DeleteReviewAsync(reviewId, userId, isAdmin);
 
-                if (!isDeleted)
-                    return NotFound(new { message = "Review not found" });
+                var result = await _reviewService.DeleteReviewAsync(reviewId, userId, isAdmin);
+
+                if (!result.Success)
+                    return StatusCode(result.StatusCode, new { message = result.Message });
 
                 return Ok(new { message = "Review deleted successfully." });
             }

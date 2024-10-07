@@ -1,96 +1,103 @@
-﻿//using FurniFusion.Data;
-//using FurniFusion.Models;
-//using FurniFusion_E_Commerce_.Dtos.Profile.Address;
-//using FurniFusion_E_Commerce_.Interfaces;
-//using Microsoft.EntityFrameworkCore;
+﻿using FurniFusion.Data;
+using FurniFusion.Dtos.Profile.Address;
+using FurniFusion.Interfaces;
+using FurniFusion.Models;
+using Microsoft.EntityFrameworkCore;
 
-//namespace FurniFusion_E_Commerce_.Services
-//{
-//    public class AddressService : IAddressService
-//    {
-//        private readonly FurniFusionDbContext _context;
+namespace FurniFusion.Services
+{
+    public class AddressService : IAddressService
+    {
+        private readonly FurniFusionDbContext _context;
 
-//        public AddressService(FurniFusionDbContext context)
-//        {
-//            _context = context;
-//        }
+        public AddressService(FurniFusionDbContext context)
+        {
+            _context = context;
+        }
 
-//        public async Task<UserAddress?> GetAddressAsync(int addressId, string userId)
-//        {
-//            var address = await _context.UserAddresses
-//                                        .FirstOrDefaultAsync(a => a.AddressId == addressId && a.UserId == userId);
+        public async Task<ServiceResult<UserAddress?>> GetAddressAsync(int addressId, string userId)
+        {
+            var address = await _context.UserAddresses
+                                        .FirstOrDefaultAsync(a => a.AddressId == addressId);
 
-//            return address;
-//        }
+            if (address == null)
+                return ServiceResult<UserAddress?>.ErrorResult("Address not found", StatusCodes.Status404NotFound);
 
-//        public async Task<List<UserAddress>> GetAllAddressesAsync(string userId)
-//        {
-//            return await _context.UserAddresses
-//                                 .Where(a => a.UserId == userId)
-//                                 .ToListAsync() ?? new List<UserAddress>();
-//        }
+            if (address.UserId != userId)
+                return ServiceResult<UserAddress?>.ErrorResult("Unauthorized", StatusCodes.Status403Forbidden);
 
-//        public async Task<UserAddress?> AddAddressAsync(UserAddress address, string userId)
-//        {
-//            try
-//            {
-//                var existingAddress = await _context.UserAddresses
-//                                                    .FirstOrDefaultAsync(a => a.Street == address.Street
-//                                                                           && a.City == address.City
-//                                                                           && a.UserId == userId);
+            return ServiceResult<UserAddress?>.SuccessResult(address);
+        }
 
-//                if (existingAddress != null)
-//                    throw new Exception("The address already exists for this user.");
+        public async Task<ServiceResult<List<UserAddress>>> GetAllAddressesAsync(string userId)
+        {
+            var addresses = await _context.UserAddresses
+                                          .Where(a => a.UserId == userId)
+                                          .ToListAsync();
 
-//                var createdAddress = await _context.UserAddresses.AddAsync(address);
-//                await _context.SaveChangesAsync();
-//                return createdAddress.Entity;
-//            }
-//            catch (Exception ex)
-//            {
-//                throw new Exception("An error occurred while adding the address.", ex);
-//            }
-//        }
+            if (addresses.Count == 0)
+                return ServiceResult<List<UserAddress>>.ErrorResult("No addresses found", StatusCodes.Status404NotFound);
 
-//        public async Task<UserAddress?> UpdateAddressAsync(UpdateAddressDto addressDto, string userId)
-//        {
-//            try
-//            {
-//                var address = await _context.UserAddresses.FirstOrDefaultAsync(a => a.AddressId == addressDto.AddressId && a.UserId == userId);
+            return ServiceResult<List<UserAddress>>.SuccessResult(addresses);
+        }
 
-//                if (address == null)
-//                    return null;
+        public async Task<ServiceResult<UserAddress?>> AddAddressAsync(UserAddress address, string userId)
+        {
 
-//                address.Country = addressDto.Country ?? address.Country;
-//                address.City = addressDto.City ?? address.City;
-//                address.State = addressDto.State ?? address.State;
-//                address.Street = addressDto.Street ?? address.Street;
-//                address.PostalCode = addressDto.PostalCode ?? address.PostalCode;
-//                address.IsPrimaryAddress = addressDto.IsPrimaryAddress ?? address.IsPrimaryAddress;
-//                address.UpdatedAt = DateTime.Now;
+            var existingAddress = await _context.UserAddresses
+                                                .FirstOrDefaultAsync(a => a.Street == address.Street
+                                                                        && a.City == address.City
+                                                                        && a.UserId == userId);
 
-//                await _context.SaveChangesAsync();
+            if (existingAddress != null)
+                return ServiceResult<UserAddress?>.ErrorResult("Address already exists for this user", StatusCodes.Status400BadRequest);
 
-//                return address;
-//            }
-//            catch (Exception ex)
-//            {
-//                throw new Exception("An error occurred while updating the address.", ex);
-//            }
-//        }
+            var createdAddress = await _context.UserAddresses.AddAsync(address);
+            await _context.SaveChangesAsync();
 
-//        public async Task<bool> DeleteAddressAsync(int addressId, string userId)
-//        {
-//            var address = await _context.UserAddresses
-//                                        .FirstOrDefaultAsync(a => a.AddressId == addressId && a.UserId == userId);
+            return ServiceResult<UserAddress?>.SuccessResult(createdAddress.Entity, "Address added successfully", StatusCodes.Status201Created);
 
-//            if (address == null)
-//                return false;
+        }
 
-//            _context.UserAddresses.Remove(address);
-//            await _context.SaveChangesAsync();
+        public async Task<ServiceResult<UserAddress?>> UpdateAddressAsync(UpdateAddressDto addressDto, int addressId, string userId)
+        {
+            var address = await _context.UserAddresses.FirstOrDefaultAsync(a => a.AddressId == addressId);
 
-//            return true;
-//        }
-//    }
-//}
+            if (address == null)
+                return ServiceResult<UserAddress?>.ErrorResult("Address not found", StatusCodes.Status404NotFound);
+
+            if (address.UserId != userId)
+                return ServiceResult<UserAddress?>.ErrorResult("Unauthorized", StatusCodes.Status403Forbidden);
+
+            address.Country = addressDto.Country ?? address.Country;
+            address.City = addressDto.City ?? address.City;
+            address.State = addressDto.State ?? address.State;
+            address.Street = addressDto.Street ?? address.Street;
+            address.PostalCode = addressDto.PostalCode ?? address.PostalCode;
+            address.IsPrimaryAddress = addressDto.IsPrimaryAddress ?? address.IsPrimaryAddress;
+            address.UpdatedAt = DateTime.Now;
+
+            await _context.SaveChangesAsync();
+
+            return ServiceResult<UserAddress?>.SuccessResult(address);
+        }
+
+        public async Task<ServiceResult<bool>> DeleteAddressAsync(int addressId, string userId)
+        {
+            var address = await _context.UserAddresses
+                                        .FirstOrDefaultAsync(a => a.AddressId == addressId);
+
+            if (address == null)
+                return ServiceResult<bool>.ErrorResult("Address not found", StatusCodes.Status404NotFound);
+
+            if (address.UserId != userId)
+                return ServiceResult<bool>.ErrorResult("Unauthorized", StatusCodes.Status403Forbidden);
+
+            _context.UserAddresses.Remove(address);
+            await _context.SaveChangesAsync();
+
+            return ServiceResult<bool>.SuccessResult(true);
+        }
+    }
+
+}

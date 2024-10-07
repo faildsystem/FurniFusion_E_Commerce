@@ -4,9 +4,6 @@ namespace FurniFusion.Dtos.Profile.Address
 {
     public class UpdateAddressDto
     {
-
-        [Required]
-        public int? AddressId { get; set; }
         public string? Country { get; set; }
         public string? City { get; set; }
         public string? State { get; set; }
@@ -15,12 +12,6 @@ namespace FurniFusion.Dtos.Profile.Address
         private DateTime UpdatedAt { get; set; }
 
         public bool? IsPrimaryAddress { get; set; }
-
-        public UpdateAddressDto()
-        {
-            IsPrimaryAddress = false;
-            UpdatedAt = DateTime.Now;
-        }
     }
 }
 

@@ -1,0 +1,2 @@
+- apply repository pattern to seperate the service layer from the database layer
+- optimize get all cart items qurery (cart service file)

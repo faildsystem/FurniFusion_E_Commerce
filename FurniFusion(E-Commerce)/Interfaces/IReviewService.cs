@@ -5,15 +5,11 @@ namespace FurniFusion.Interfaces
 {
     public interface IReviewService
     {
-
-        Task<ProductReview?> AddReviewAsync(ProductReview review);
-
-        Task<List<ProductReview>?> GetProductReviewsAsync(int productId);
-
-        Task<bool> DeleteReviewAsync(int reviewId, string userId, bool isAdmin);
-
-        Task<ProductReview?> GetReviewAsync(int reviewId);
-
-        Task<ProductReview?> UpdateReviewasync(UpdateReviewDto UpdateReviewDto);
+        Task<ServiceResult<ProductReview?>> AddReviewAsync(ProductReview review);
+        Task<ServiceResult<List<ProductReview>>> GetProductReviewsAsync(int productId);
+        Task<ServiceResult<bool>> DeleteReviewAsync(int reviewId, string userId, bool isAdmin);
+        Task<ServiceResult<ProductReview?>> GetReviewAsync(int reviewId);
+        Task<ServiceResult<ProductReview?>> UpdateReviewasync(UpdateReviewDto updateReviewDto, int reviewId, string userId);
     }
+
 }
