@@ -177,5 +177,66 @@ namespace FurniFusion.Services
             _context.Products.Remove(product);
             await _context.SaveChangesAsync();
         }
+
+        public async Task<Product> GetProductByIdAsync(int id)
+        {
+            var product = await _context.Products.FirstOrDefaultAsync(p => p.ProductId == id);
+
+            if (product == null)
+            {
+                throw new Exception("Product not found");
+            }
+
+            return product;
+        }
+
+        public async Task<Product> ApplyDiscountToProduct(int productId, int discountId)
+        {
+            // Retrieve the product
+            var product = await GetProductByIdAsync(productId);
+            if (product == null)
+            {
+                throw new Exception($"Product with ID {productId} not found.");
+            }
+
+            // Retrieve the discount
+            var discount = await _context.Discounts.FirstOrDefaultAsync(d => d.DiscountId == discountId);
+            if (discount == null)
+            {
+                throw new Exception($"Discount with ID {discountId} not found.");
+            }
+
+            // Check if discount is active and valid
+            if (discount.IsActive == false || discount.ValidFrom > DateOnly.FromDateTime(DateTime.Now) || discount.ValidTo < DateOnly.FromDateTime(DateTime.Now))
+            {
+                throw new Exception("Discount is not valid or active.");
+            }
+
+            // Apply discount to product
+            product.DiscountId = discount.DiscountId;
+
+            var discountUnit = await _context.DiscountUnits.FirstOrDefaultAsync(du => du.UnitId == discount.DiscountUnitId);
+            
+            // Update the product price
+            if (discount.DiscountValue.HasValue)
+            {
+                if (discountUnit!.UnitName == "%")
+                {
+                    var discountTotalValue = product.Price * (discount.DiscountValue.Value / 100);
+
+                    product.Price -= (discountTotalValue <= discount.MaxAmount!.Value) ? discountTotalValue : discount.MaxAmount.Value; 
+                }
+                else if (discountUnit.UnitName  == "$")
+                {
+                    product.Price -= discount.DiscountValue.Value;
+                }
+            }
+
+            // Update product in database
+            _context.Products.Update(product);
+            await _context.SaveChangesAsync();
+
+            return product;
+        }
     }
 }
