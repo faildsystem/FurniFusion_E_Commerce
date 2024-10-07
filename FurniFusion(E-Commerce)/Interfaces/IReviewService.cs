@@ -1,7 +1,7 @@
 ﻿using FurniFusion.Models;
-using FurniFusion_E_Commerce_.Dtos.Review;
+using FurniFusion.Dtos.Review;
 
-namespace FurniFusion_E_Commerce_.Interfaces
+namespace FurniFusion.Interfaces
 {
     public interface IReviewService
     {

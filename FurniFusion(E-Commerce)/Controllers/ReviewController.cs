@@ -1,11 +1,11 @@
-﻿using FurniFusion_E_Commerce_.Dtos.Review;
-using FurniFusion_E_Commerce_.Interfaces;
-using FurniFusion_E_Commerce_.Mappers;
+﻿using FurniFusion.Dtos.Review;
+using FurniFusion.Interfaces;
+using FurniFusion.Mappers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
-namespace FurniFusion_E_Commerce_.Controllers
+namespace FurniFusion.Controllers
 {
     [ApiController]
     [Route("api/[controller]/[action]")]

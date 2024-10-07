@@ -1,10 +1,10 @@
 ﻿using FurniFusion.Data;
 using FurniFusion.Models;
-using FurniFusion_E_Commerce_.Dtos.Review;
-using FurniFusion_E_Commerce_.Interfaces;
+using FurniFusion.Dtos.Review;
+using FurniFusion.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
-namespace FurniFusion_E_Commerce_.Services
+namespace FurniFusion.Services
 {
     public class ReviewService : IReviewService
     {
