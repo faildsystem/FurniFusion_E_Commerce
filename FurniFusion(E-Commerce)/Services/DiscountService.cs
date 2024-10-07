@@ -154,6 +154,90 @@ namespace FurniFusion.Services
             await _context.SaveChangesAsync();
         }
 
+        public async Task<Discount> GetDiscountByIdAsync(int id)
+        {
+            var discount = await _context.Discounts.FirstOrDefaultAsync(p => p.DiscountId == id);
+
+            if (discount == null)
+            {
+                throw new Exception("Discount not found");
+            }
+
+            return discount;
+        }
+
+        public async Task<Discount?> IsDiscountCodeExistsAsync(string code)
+        {
+            var discount = await _context.Discounts.FirstOrDefaultAsync(p => p.DiscountCode == code);
+
+            return discount;
+        }
+
+        public Task<List<Discount>> GetActiveDiscountsAsync()
+        {
+            var activeDiscounts = _context.Discounts.Where(d => d.IsActive == true).ToListAsync();
+            return activeDiscounts;
+        }
+
+        public async Task<bool> ValidateDiscountCodeAsync(string code)
+        {
+            // Retrieve the discount with the provided code
+            var discount = await _context.Discounts.FirstOrDefaultAsync(d => d.DiscountCode == code);
+
+            // Check if the discount exists
+            if (discount == null)
+            {
+                return false;
+            }
+
+            // Check if the discount is active and within the valid date range
+            if (!discount.IsActive.HasValue || !discount.IsActive.Value)
+            {
+                return false;
+            }
+
+            if (discount.ValidFrom.HasValue && discount.ValidFrom > DateOnly.FromDateTime(DateTime.Now))
+            {
+                return false;
+            }
+
+            if (discount.ValidTo.HasValue && discount.ValidTo < DateOnly.FromDateTime(DateTime.Now))
+            {
+                return false;
+            }
+
+            // If all checks pass, return true (discount code is valid)
+            return true;
+
+        }
+
+        public async Task DeactivateDiscountAsync(int id)
+        {
+            var discount = await _context.Discounts.FirstOrDefaultAsync(d => d.DiscountId == id);
+
+            if (discount == null) {
+                throw new Exception("Discount not found");
+            }
+
+            discount.IsActive = false;
+            _context.Discounts.Update(discount);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task ActivateDiscountAsync(int id)
+        {
+            var discount = await _context.Discounts.FirstOrDefaultAsync(d => d.DiscountId == id);
+
+            if (discount == null)
+            {
+                throw new Exception("Discount not found");
+            }
+
+            discount.IsActive = true;
+            _context.Discounts.Update(discount);
+            await _context.SaveChangesAsync();
+        }
+
         // Discount Unit
         public async Task<DiscountUnit> CreateDiscountUnitAsync(CreateDiscountUnitDto discountUnitDto)
         {
@@ -180,6 +264,18 @@ namespace FurniFusion.Services
         {
             var discountUnits = await _context.DiscountUnits.ToListAsync();
             return discountUnits;
+        }
+
+        public async Task<DiscountUnit> GetDiscountUnitByIdAsync(int id)
+        {
+            var discountUnit = await _context.DiscountUnits.FirstOrDefaultAsync(d => d.UnitId == id);
+
+            if (discountUnit == null)
+            {
+                throw new Exception("Discount unit not found");
+            }
+
+            return discountUnit;  
         }
 
         public async Task<DiscountUnit> UpdateDiscountUnitAsync(UpdateDiscountUnitDto discountUnitDto)
@@ -210,5 +306,6 @@ namespace FurniFusion.Services
             _context.DiscountUnits.Remove(discountUnit);
             await _context.SaveChangesAsync();
         }
+
     }
 }

@@ -1,7 +1,6 @@
 ﻿using FurniFusion.Dtos.ProductManager.Category;
 using FurniFusion.Interfaces;
 using FurniFusion.Mappers;
-using FurniFusion.Queries;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;

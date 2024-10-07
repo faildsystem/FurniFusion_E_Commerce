@@ -23,13 +23,44 @@ namespace FurniFusion.Controllers
         [HttpGet("getProducts")]
         public async Task<IActionResult> GetProducts([FromQuery] ProductFilter filter)
         {
-            var Products = await _productService.GetAllProductsAsync(filter);
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            try {
+                var Products = await _productService.GetAllProductsAsync(filter);
 
-            var productsDto = Products.Select(p => p.ToProductDto()).ToList();
+                var productsDto = Products.Select(p => p.ToProductDto()).ToList();
 
-            var TotalProducts = Products.Count;
+                var TotalProducts = Products.Count;
 
-            return Ok(new { TotalProducts, productsDto });
+                return Ok(new { TotalProducts, productsDto });
+
+            } catch (Exception e) {
+
+                return BadRequest(new { message = e.Message });
+            }
+            
+        }
+
+        [HttpGet("getProduct/{id}")]
+        public async Task<IActionResult> GetProduct(int id)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            try
+            {
+                var product = await _productService.GetProductByIdAsync(id);
+
+                return Ok(product.ToProductDto());
+            }
+            catch (Exception e)
+            {
+                return BadRequest(new { message = e.Message });
+            }
         }
 
         [HttpPost("createProduct")]
@@ -87,6 +118,26 @@ namespace FurniFusion.Controllers
             {
                 await _productService.DeleteProductAsync(id);
                 return Ok(new { message = "Product deleted" });
+            }
+            catch (Exception e)
+            {
+                return BadRequest(new { message = e.Message });
+            }
+        }
+
+        [HttpPost("{productId}/applyDiscount/{discountId}")]
+        public async Task<IActionResult> ApplyDiscountToProduct(int productId, int discountId)
+        {
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            try
+            {
+                var product = await _productService.ApplyDiscountToProduct(productId, discountId);
+                return Ok(product.ToProductDto());
             }
             catch (Exception e)
             {

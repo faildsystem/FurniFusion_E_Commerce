@@ -2,14 +2,13 @@ using FurniFusion.Data;
 using FurniFusion.Interfaces;
 using FurniFusion.Models;
 using FurniFusion.Services;
-using FurniFusion.Interfaces;
-using FurniFusion.Services;
 using Hangfire;
 using Hangfire.PostgreSql;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using System.Text;
 
 namespace FurniFusion
@@ -73,11 +72,11 @@ namespace FurniFusion
                 options.Lockout.AllowedForNewUsers = true;
             });
             builder.Services.AddAuthorization();
-            builder.Services.AddControllers()
-                .AddJsonOptions(options =>
-                {
-                    options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.Preserve;
-                }); 
+            builder.Services.AddControllers();
+            //.AddJsonOptions(options =>
+            //{
+            //    options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.Preserve;
+            //}); 
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
 
@@ -85,6 +84,35 @@ namespace FurniFusion
                 x.UsePostgreSqlStorage(builder.Configuration.GetConnectionString("defaultConnection")));
 
             builder.Services.AddHangfireServer();
+
+            builder.Services.AddSwaggerGen(option =>
+            {
+                option.SwaggerDoc("v1", new OpenApiInfo { Title = "FurniFusion", Version = "v1" });
+                option.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+                {
+                    In = ParameterLocation.Header,
+                    Description = "Please enter a valid token",
+                    Name = "Authorization",
+                    Type = SecuritySchemeType.Http,
+                    BearerFormat = "JWT",
+                    Scheme = "Bearer"
+                });
+                option.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type=ReferenceType.SecurityScheme,
+                    Id="Bearer"
+                }
+            },
+            new string[]{}
+        }
+    });
+            });
+
 
             // Configure Email Settings
             builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
