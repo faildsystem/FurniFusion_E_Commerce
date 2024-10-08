@@ -1,4 +1,5 @@
-﻿using FurniFusion.Models;
+﻿using FurniFusion.Dtos.CartItem;
+using FurniFusion.Models;
 
 namespace FurniFusion.Interfaces
 {
@@ -7,9 +8,16 @@ namespace FurniFusion.Interfaces
 
         Task<ServiceResult<ShoppingCart?>> GetCartAsync(string userId);
 
-        Task<ServiceResult<ShoppingCart?>> CreateCartAsync(ShoppingCart cart);
+        Task<ShoppingCart> CreateCartAsync(ShoppingCart cart);
 
-        Task<ServiceResult<ShoppingCart?>> DeleteCartAsync(string userId);
+        Task<ServiceResult<ShoppingCartItem?>> AddCartItemAsync(ShoppingCartItem shoppingCartItem, string userId);
+
+        Task<ServiceResult<ShoppingCartItem?>> UpdateCartItemQuanityAsync(UpdateCartItemQuantityDto qurantityDto, int productId, string userId);
+
+        Task<ServiceResult<ShoppingCartItem?>> DeleteCartItemAsync(int productId, string userId);
+
+        Task<ServiceResult<bool>> RemoveAllCartItems(string userId);
+
 
     }
 }

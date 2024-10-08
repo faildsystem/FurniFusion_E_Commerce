@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
-namespace FurniFusion.Controllers.Wishlist_
+namespace FurniFusion.Controllers.user
 {
     [ApiController]
     [Route("api/[controller]/[action]")]
@@ -50,8 +50,8 @@ namespace FurniFusion.Controllers.Wishlist_
 
         }
 
-        [HttpPost]
-        public async Task<IActionResult> CreateWishlist()
+        [HttpPost("{productId}")]
+        public async Task<IActionResult> AddWishlistItem([FromRoute] int productId)
         {
 
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -59,32 +59,26 @@ namespace FurniFusion.Controllers.Wishlist_
             if (string.IsNullOrEmpty(userId))
                 return Unauthorized(new { message = "User not found" });
 
-            var wishlist = new Wishlist
-            {
-                UserId = userId,
-                UpdatedAt = DateTime.Now
-            };
 
             try
             {
 
-                var result = await _wishlistService.CreateWishlistAsync(wishlist);
-
+                var result = await _wishlistService.AddWishlistItemAsync(productId, userId);
                 if (!result.Success)
                     return StatusCode(result.StatusCode, new { message = result.Message });
 
-                return Ok(result.Data);
 
+                return StatusCode(result.StatusCode, new { message = result.Message });
             }
-
             catch (Exception ex)
             {
+
                 return StatusCode(500, new { message = ex.Message });
             }
         }
 
-        [HttpDelete]
-        public async Task<IActionResult> DeleteWishlist()
+        [HttpDelete("{productId}")]
+        public async Task<IActionResult> DeleteWishlistItem([FromRoute] int productId)
         {
 
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -96,15 +90,46 @@ namespace FurniFusion.Controllers.Wishlist_
             try
             {
 
-                var result = await _wishlistService.DeleteWishlistAsync(userId);
+                var result = await _wishlistService.RemoveWishlistItemAsync(productId, userId);
 
 
                 if (!result.Success)
                     return StatusCode(result.StatusCode, new { message = result.Message });
 
-
-                return Ok(new { message = result.Message });
+                return StatusCode(result.StatusCode, new { message = result.Message });
             }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = ex.Message });
+
+
+            }
+        }
+
+
+        [HttpDelete]
+
+        public async Task<IActionResult> DeleteAllWishlistItems()
+        {
+
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrEmpty(userId))
+                return Unauthorized(new { message = "User not found" });
+
+
+            try
+            {
+
+                var result = await _wishlistService.RemoveAllWishlistItemsAsync(userId);
+
+
+                if (!result.Success)
+                    return StatusCode(result.StatusCode, new { message = result.Message });
+
+                return StatusCode(result.StatusCode, new { message = result.Message });
+            }
+
             catch (Exception ex)
             {
                 return StatusCode(500, new { message = ex.Message });
