@@ -122,9 +122,7 @@ namespace FurniFusion
             builder.Services.AddScoped<IReviewService, ReviewService>();
             builder.Services.AddScoped<IAddressService, AddressService>();
             builder.Services.AddScoped<ICartService, CartService>();
-            builder.Services.AddScoped<ICartItemService, CartItemService>();
             builder.Services.AddScoped<IWishlistService, WishlistService>();
-            builder.Services.AddScoped<IWishlistItemService, WishlistItemService>();
 
             builder.Services.AddScoped<ITokenService, TokenService>();
             builder.Services.AddScoped<ICategoryService, CategoryService>();

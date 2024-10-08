@@ -1,22 +1,54 @@
 ﻿using FurniFusion.Dtos.CartItem;
 using FurniFusion.Interfaces;
 using FurniFusion.Mappers;
+using FurniFusion.Models;
+using FurniFusion.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
-namespace FurniFusion.Controllers.Cart
+namespace FurniFusion.Controllers.user
 {
     [Authorize]
     [ApiController]
-    [Route("api/[controller]/{action}")]
-    public class CartItemController : ControllerBase
+    [Route("api/[controller]/[action]")]
+    public class CartController : ControllerBase
     {
-        private readonly ICartItemService _cartItemService;
 
-        public CartItemController(ICartItemService cartItemService)
+        private readonly ICartService _cartService;
+
+
+        public CartController(ICartService cartService)
         {
-            _cartItemService = cartItemService;
+            _cartService = cartService;
+        }
+
+
+        [HttpGet]
+        public async Task<IActionResult> GetCart()
+        {
+
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (string.IsNullOrEmpty(userId))
+                return BadRequest(ModelState);
+
+            try
+            {
+
+                var result = await _cartService.GetCartAsync(userId);
+
+                if (!result.Success)
+                    return StatusCode(result.StatusCode, new { message = result.Message });
+
+                return Ok(result.Data!.ShoppingCartItems.Select(ShoppingCartItem => ShoppingCartItem.ToCartItemDto()));
+            }
+            catch (Exception ex)
+            {
+
+                return StatusCode(500, new { message = ex.Message });
+            }
+
         }
 
         [HttpPost]
@@ -35,7 +67,7 @@ namespace FurniFusion.Controllers.Cart
 
             try
             {
-                var result = await _cartItemService.AddCartItemAsync(cartItem, userId);
+                var result = await _cartService.AddCartItemAsync(cartItem, userId);
 
                 if (!result.Success)
                     return StatusCode(result.StatusCode, new { message = result.Message });
@@ -66,7 +98,7 @@ namespace FurniFusion.Controllers.Cart
 
             try
             {
-                var result = await _cartItemService.UpdateCartItemQuanityAsync(quantityDto, productId, userId);
+                var result = await _cartService.UpdateCartItemQuanityAsync(quantityDto, productId, userId);
 
                 if (!result.Success)
                     return StatusCode(result.StatusCode, new { message = result.Message });
@@ -90,7 +122,7 @@ namespace FurniFusion.Controllers.Cart
 
             try
             {
-                var result = await _cartItemService.DeleteCartItemAsync(productId, userId);
+                var result = await _cartService.DeleteCartItemAsync(productId, userId);
 
                 if (!result.Success)
                     return StatusCode(result.StatusCode, new { message = result.Message });
@@ -103,5 +135,32 @@ namespace FurniFusion.Controllers.Cart
             }
 
         }
+
+
+        [HttpDelete]
+        public async Task<IActionResult> RemoveAllCartItem()
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrEmpty(userId))
+                return Unauthorized(new { message = "User not found" });
+
+            try
+            {
+                var result = await _cartService.RemoveAllCartItems(userId);
+
+                if (!result.Success)
+                    return StatusCode(result.StatusCode, new { message = result.Message });
+
+                return Ok(new { message = result.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = ex.Message });
+            }
+
+
+        }
+
     }
 }
