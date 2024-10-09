@@ -2,6 +2,7 @@
 using FurniFusion.Interfaces;
 using FurniFusion.Mappers;
 using FurniFusion.Queries;
+using FurniFusion.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -27,20 +28,26 @@ namespace FurniFusion.Controllers
             {
                 return BadRequest(ModelState);
             }
+
             try {
-                var Products = await _productService.GetAllProductsAsync(filter);
 
-                var productsDto = Products.Select(p => p.ToProductDto()).ToList();
+                var result = await _productService.GetAllProductsAsync(filter);
 
-                var TotalProducts = Products.Count;
+                if (!result.Success)
+                    return StatusCode(result.StatusCode, new { message = result.Message });
 
-                return Ok(new { TotalProducts, productsDto });
+                var products = result.Data.Select(p => p.ToProductDto()).ToList();
 
-            } catch (Exception e) {
+                var TotalProducts = result.Data.Count;
 
-                return BadRequest(new { message = e.Message });
+                return Ok(new { TotalProducts, products });
+
             }
-            
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = ex.Message });
+            }
+
         }
 
         [HttpGet("getProduct/{id}")]
@@ -53,13 +60,16 @@ namespace FurniFusion.Controllers
 
             try
             {
-                var product = await _productService.GetProductByIdAsync(id);
+                var result = await _productService.GetProductByIdAsync(id);
 
-                return Ok(product.ToProductDto());
+                if (!result.Success)
+                    return StatusCode(result.StatusCode, new { message = result.Message });
+
+                return Ok(result.Data.ToProductDto());
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                return BadRequest(new { message = e.Message });
+                return StatusCode(500, new { message = ex.Message });
             }
         }
 
@@ -71,19 +81,26 @@ namespace FurniFusion.Controllers
             {
                 return BadRequest(ModelState);
             }
+                
+            var creatorId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (string.IsNullOrEmpty(creatorId))
+                return Unauthorized(new { message = "User not found" });
 
             try
             {
-                var creatorId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-                var product = await _productService.CreateProductAsync(productDto, creatorId!);
+                var result = await _productService.CreateProductAsync(productDto, creatorId!);
 
-                return Ok(product.ToProductDto());
+                if (!result.Success)
+                    return StatusCode(result.StatusCode, new { message = result.Message });
+
+                return CreatedAtAction(nameof(GetProduct), new { id = result.Data.ProductId }, result.Data.ToProductDto());
 
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                return BadRequest(new { message = e.Message });
+                return StatusCode(500, new { message = ex.Message });
             }
 
         }
@@ -95,34 +112,51 @@ namespace FurniFusion.Controllers
             {
                 return BadRequest(ModelState);
             }
+                
+            var updatorId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (string.IsNullOrEmpty(updatorId))
+                return Unauthorized(new { message = "User not found" });
 
             try
             {
-                var updatorId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-                var product = await _productService.UpdateProductAsync(productDto, updatorId!);
+                var result = await _productService.UpdateProductAsync(productDto, updatorId!);
 
-                return Ok(product.ToProductDto());
+                if (!result.Success)
+                    return StatusCode(result.StatusCode, new { message = result.Message });
+
+                return Ok(result.Data.ToProductDto());
 
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                return BadRequest(new { message = e.Message });
+                return StatusCode(500, new { message = ex.Message });
             }
         }
 
         [HttpDelete("deleteProduct/{id}")]
         public async Task<IActionResult> DeleteProduct(int id)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
             try
             {
-                await _productService.DeleteProductAsync(id);
-                return Ok(new { message = "Product deleted" });
+               var result = await _productService.DeleteProductAsync(id);
+
+                if (!result.Success)
+                    return StatusCode(result.StatusCode, new { message = result.Message });
+
+                return Ok(new { message = "Product deleted successfully" });
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                return BadRequest(new { message = e.Message });
+                return StatusCode(500, new { message = ex.Message });
             }
+
         }
 
         [HttpPost("{productId}/applyDiscount/{discountId}")]
@@ -136,12 +170,16 @@ namespace FurniFusion.Controllers
 
             try
             {
-                var product = await _productService.ApplyDiscountToProduct(productId, discountId);
-                return Ok(product.ToProductDto());
+                var result = await _productService.ApplyDiscountToProductAsync(productId, discountId);
+
+                if (!result.Success)
+                    return StatusCode(result.StatusCode, new { message = result.Message });
+
+                return Ok(new { message = "Discount applied successfully" });
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                return BadRequest(new { message = e.Message });
+                return StatusCode(500, new { message = ex.Message });
             }
         }
     }

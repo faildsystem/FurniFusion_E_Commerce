@@ -79,21 +79,21 @@ public partial class FurniFusionDbContext : IdentityDbContext<User>
         base.OnModelCreating(modelBuilder);
 
 
-        List<IdentityRole> roles = new List<IdentityRole>
-            {
-                new IdentityRole
-                {
-                    Name = "superAdmin",
-                    NormalizedName = "SUPERADMIN"
-                },
-                new IdentityRole
-                {
-                    Name = "user",
-                    NormalizedName = "USER"
-                }
-            };
+        //List<IdentityRole> roles = new List<IdentityRole>
+        //    {
+        //        new IdentityRole
+        //        {
+        //            Name = "superAdmin",
+        //            NormalizedName = "SUPERADMIN"
+        //        },
+        //        new IdentityRole
+        //        {
+        //            Name = "user",
+        //            NormalizedName = "USER"
+        //        }
+        //    };
 
-        modelBuilder.Entity<IdentityRole>().HasData(roles);
+        //modelBuilder.Entity<IdentityRole>().HasData(roles);
 
 
         modelBuilder.Entity<Carrier>(entity =>
@@ -418,11 +418,11 @@ public partial class FurniFusionDbContext : IdentityDbContext<User>
 
         modelBuilder.Entity<OrderItem>(entity =>
         {
-            entity.HasKey(e => e.ItemId).HasName("Order_Item_pkey");
+            entity.HasKey(e => new { e.OrderId, e.ProductId }).HasName("Order_Item_pkey");
 
             entity.ToTable("Order_Item");
 
-            entity.Property(e => e.ItemId).HasColumnName("item_id");
+            
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("CURRENT_TIMESTAMP")
                 .HasColumnType("timestamp without time zone")
@@ -824,7 +824,7 @@ public partial class FurniFusionDbContext : IdentityDbContext<User>
 
         modelBuilder.Entity<UserAddress>(entity =>
         {
-            entity.HasKey(e => e.AddressId).HasName("User_Address_pkey");
+            entity.HasKey(e => e.AddressId).HasName("Address_id_pkey");
 
             entity.ToTable("User_Address");
 

@@ -15,20 +15,33 @@ namespace FurniFusion.Services
             _context = context;
         }
 
-        public async Task<List<Category>> GetAllCategoriesAsync()
+        public async Task<ServiceResult<List<Category>>> GetAllCategoriesAsync()
         {
-            var categories =  await _context.Categories.ToListAsync();
 
-            return categories;
+            var categories =  await _context.Categories.Include(p => p.Products).ToListAsync();
+            
+            return ServiceResult<List<Category>>.SuccessResult(categories);
         }
 
-        public async Task<Category> CreateCategoryAsync(CreateCategoryDto categoryDto, string creatorId)
+        public async Task<ServiceResult<Category>> GetCategoryByIdAsync(int? id)
         {
-            var category = await _context.Categories.FirstOrDefaultAsync(c => c.CategoryName == categoryDto.CategoryName);
+            var category = await _context.Categories.Include(p => p.Products).FirstOrDefaultAsync(c => c.CategoryId == id);
 
-            if (category != null)
+            if (category == null)
             {
-                throw new Exception("Category already exists");
+                return ServiceResult<Category>.ErrorResult("Category not found", StatusCodes.Status404NotFound);
+            }
+
+            return ServiceResult<Category>.SuccessResult(category);
+        }
+
+        public async Task<ServiceResult<Category>> CreateCategoryAsync(CreateCategoryDto categoryDto, string creatorId)
+        {
+            var result = await _context.Categories.FirstOrDefaultAsync(c => c.CategoryName == categoryDto.CategoryName);
+
+            if (result != null)
+            {
+                return ServiceResult<Category>.ErrorResult("Category already exists", StatusCodes.Status409Conflict);
             }
 
             var newCategory = new Category
@@ -42,38 +55,42 @@ namespace FurniFusion.Services
 
             await _context.Categories.AddAsync(newCategory);
             await _context.SaveChangesAsync();
-            return newCategory;
+
+            return ServiceResult<Category>.SuccessResult(newCategory, "Category created successfully", StatusCodes.Status201Created);
         }
 
-        public async Task<Category> UpdateCategoryAsync(UpdateCategoryDto categoryDto, string updatorId)
+        public async Task<ServiceResult<Category>> UpdateCategoryAsync(UpdateCategoryDto categoryDto, string updatorId)
         {
-            var category = await _context.Categories.FirstOrDefaultAsync(c => c.CategoryId == categoryDto.CategoryId);
+            var result = await GetCategoryByIdAsync(categoryDto.CategoryId);
 
-            if (category == null)
+            if (result == null || result.Data == null)
             {
-                throw new Exception("Category not found");
+                return ServiceResult<Category>.ErrorResult("Category not found", StatusCodes.Status404NotFound);
             }
 
-            category.CategoryName = categoryDto.NewCategoryName;
-            category.UpdatedAt = DateTime.Now;
-            category.UpdatedBy = updatorId;
+            result.Data.CategoryName = categoryDto.NewCategoryName;
+            result.Data.UpdatedAt = DateTime.Now;
+            result.Data.UpdatedBy = updatorId;
 
-            _context.Categories.Update(category);
+            _context.Categories.Update(result.Data);
             await _context.SaveChangesAsync();
-            return category;
+            
+            return ServiceResult<Category>.SuccessResult(result.Data, "Category updated successfully");
         }
 
-        public async Task DeleteCategoryAsync(int id)
+        public async Task<ServiceResult<bool>> DeleteCategoryAsync(int id)
         {
-            var category = await _context.Categories.FirstOrDefaultAsync(c => c.CategoryId == id);
+            var result = await GetCategoryByIdAsync(id);
 
-            if (category == null)
+            if (result == null || result.Data == null)
             {
-                throw new Exception("Category not found");
+                return ServiceResult<bool>.ErrorResult("Category not found", StatusCodes.Status404NotFound);
             }
 
-            _context.Categories.Remove(category);
+            _context.Categories.Remove(result.Data);
             await _context.SaveChangesAsync();
+
+            return ServiceResult<bool>.SuccessResult(true, "Category deleted successfully");
         }
     }
 }

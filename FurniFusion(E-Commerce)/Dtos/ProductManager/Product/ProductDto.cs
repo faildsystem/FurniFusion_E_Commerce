@@ -1,4 +1,7 @@
-﻿namespace FurniFusion.Dtos.ProductManager.Product
+﻿using FurniFusion.Dtos.ProductManager.Category;
+using FurniFusion.Dtos.ProductManager.Discount;
+
+namespace FurniFusion.Dtos.ProductManager.Product
 {
     public class ProductDto
     {
@@ -32,7 +35,11 @@
 
         public int? DiscountId { get; set; }
 
+        public DiscountDto? Discount { get; set; }
+
         public int? CategoryId { get; set; }
+
+        public CategoryDto? Category { get; set; }
 
         public decimal? AverageRating { get; set; }
     }

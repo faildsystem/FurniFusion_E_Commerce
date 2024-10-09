@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using FurniFusion.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -12,9 +13,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FurniFusion.Migrations
 {
     [DbContext(typeof(FurniFusionDbContext))]
-    partial class FurniFusionDbContextModelSnapshot : ModelSnapshot
+    [Migration("20241009174832_removePriceDiscounted")]
+    partial class removePriceDiscounted
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

@@ -17,9 +17,9 @@ namespace FurniFusion.Services
         }
 
         // Discount
-        public async Task<List<Discount>> GetAllDiscountsAsync(DiscountFilter filter)
+        public async Task<ServiceResult<List<Discount>>> GetAllDiscountsAsync(DiscountFilter filter)
         {
-            var discounts = _context.Discounts.AsQueryable();
+            var discounts = _context.Discounts.Include(u => u.DiscountUnit).AsQueryable();
 
             if (filter.DiscountId > 0)
             {
@@ -76,24 +76,25 @@ namespace FurniFusion.Services
             var productsList = await discounts.Skip(skipNumber).Take(filter.PageSize).ToListAsync();
 
            
-            return await discounts.Skip(skipNumber).Take(filter.PageSize).ToListAsync();
+            var result = await discounts.Skip(skipNumber).Take(filter.PageSize).ToListAsync();
+
+            return ServiceResult<List<Discount>>.SuccessResult(result);
         }
 
-        public async Task<Discount> CreateDiscountAsync(CreateDiscountDto discountDto, string creatorId)
+        public async Task<ServiceResult<Discount>> CreateDiscountAsync(CreateDiscountDto discountDto, string creatorId)
         {
             var discountUnit = await _context.DiscountUnits.FirstOrDefaultAsync(d => d.UnitId == discountDto.DiscountUnitId);
 
             if (discountUnit == null)
             {
-                throw new Exception("Discount unit not found");
+                return ServiceResult<Discount>.ErrorResult("Discount unit not found", StatusCodes.Status404NotFound);
             }
 
-            var discount = await _context.Discounts
-        .FirstOrDefaultAsync(d => d.DiscountCode == discountDto.DiscountCode);
+            var result = await GetDiscountByCodeAsync(discountDto.DiscountCode);
 
-            if (discount != null)
+            if (result != null && result.Data != null)
             {
-                throw new Exception("Discount with the same code already exists");
+                return ServiceResult<Discount>.ErrorResult("Discount code already exists", StatusCodes.Status409Conflict);
             }
 
             var createdDiscount = new Discount
@@ -113,199 +114,151 @@ namespace FurniFusion.Services
  
             await _context.Discounts.AddAsync(createdDiscount);
             await _context.SaveChangesAsync();
-            return createdDiscount;
+            
+            return ServiceResult<Discount>.SuccessResult(createdDiscount, "Discount created successfully", StatusCodes.Status201Created);
         }
 
-        public async Task<Discount> UpdateDiscountAsync(UpdateDiscountDto discountDto, string updatorId)
+        public async Task<ServiceResult<Discount>> UpdateDiscountAsync(UpdateDiscountDto discountDto, string updatorId)
         {
-            var discount = await _context.Discounts.FirstOrDefaultAsync(d => d.DiscountId == discountDto.DiscountId);
+            var result = await GetDiscountByIdAsync(discountDto.DiscountId);
 
-            if (discount == null)
+            if (result == null || result.Data == null)
             {
-                throw new Exception("Discount not found");
+                return ServiceResult<Discount>.ErrorResult("Discount not found", StatusCodes.Status404NotFound);
             }
 
-            discount.DiscountCode = discountDto.DiscountCode ?? discount.DiscountCode;
-            discount.DiscountValue = discountDto.DiscountValue ?? discount.DiscountValue;
-            discount.DiscountUnitId = discountDto.DiscountUnitId ?? discount.DiscountUnitId;
-            discount.IsActive = discountDto.IsActive ?? discount.IsActive;
-            discount.ValidFrom = discountDto.ValidFrom ?? discount.ValidFrom;
-            discount.ValidTo = discountDto.ValidTo ?? discount.ValidTo;
-            discount.MaxAmount = discountDto.MaxAmount ?? discount.MaxAmount;
-            discount.UpdatedBy = updatorId;
-            discount.UpdatedAt = DateTime.Now;
+            if (discountDto.DiscountCode != null)
+            {
+                var existingDiscount = await GetDiscountByCodeAsync(discountDto.DiscountCode);
 
-            _context.Discounts.Update(discount);
+                if (existingDiscount != null || existingDiscount.Data != null)
+                {
+                    return ServiceResult<Discount>.ErrorResult("Discount code already exists", StatusCodes.Status409Conflict);
+                }
+            }
+
+            result.Data.DiscountCode = discountDto.DiscountCode ?? result.Data.DiscountCode;
+            result.Data.DiscountValue = discountDto.DiscountValue ?? result.Data.DiscountValue;
+            result.Data.DiscountUnitId = discountDto.DiscountUnitId ?? result.Data.DiscountUnitId;
+            result.Data.IsActive = discountDto.IsActive ?? result.Data.IsActive;
+            result.Data.ValidFrom = discountDto.ValidFrom ?? result.Data.ValidFrom;
+            result.Data.ValidTo = discountDto.ValidTo ?? result.Data.ValidTo;
+            result.Data.MaxAmount = discountDto.MaxAmount ?? result.Data.MaxAmount;
+            result.Data.UpdatedBy = updatorId;
+            result.Data.UpdatedAt = DateTime.Now;
+
+            _context.Discounts.Update(result.Data);
             await _context.SaveChangesAsync();
 
-            return discount;
+            return ServiceResult<Discount>.SuccessResult(result.Data, "Discount updated successfully");
 
         }
 
-        public async Task DeleteDiscountAsync(int id)
+        public async Task<ServiceResult<bool>> DeleteDiscountAsync(int id)
         {
-            var discount = await _context.Discounts.FirstOrDefaultAsync(d => d.DiscountId == id);
-            if (discount == null)
+            var result = await GetDiscountByIdAsync(id);
+
+            if (result == null || result.Data == null)
             {
-                throw new Exception("Discount not found");
+                return ServiceResult<bool>.ErrorResult("Discount not found", StatusCodes.Status404NotFound);
             }
 
-            _context.Discounts.Remove(discount);
+            _context.Discounts.Remove(result.Data);
             await _context.SaveChangesAsync();
+
+            return ServiceResult<bool>.SuccessResult(true, "Discount deleted successfully");
         }
 
-        public async Task<Discount> GetDiscountByIdAsync(int id)
+        public async Task<ServiceResult<Discount>> GetDiscountByIdAsync(int? id)
         {
-            var discount = await _context.Discounts.FirstOrDefaultAsync(p => p.DiscountId == id);
+            var discount = await _context.Discounts.Include(u => u.DiscountUnit).FirstOrDefaultAsync(p => p.DiscountId == id);
 
             if (discount == null)
             {
-                throw new Exception("Discount not found");
+                return ServiceResult<Discount>.ErrorResult("Discount not found", StatusCodes.Status404NotFound);
             }
 
-            return discount;
+            return ServiceResult<Discount>.SuccessResult(discount);
         }
 
-        public async Task<Discount?> IsDiscountCodeExistsAsync(string code)
+        public async Task<ServiceResult<Discount?>> GetDiscountByCodeAsync(string code)
         {
-            var discount = await _context.Discounts.FirstOrDefaultAsync(p => p.DiscountCode == code);
+            var discount = await _context.Discounts.Include(u => u.DiscountUnit).FirstOrDefaultAsync(p => p.DiscountCode == code);
 
-            return discount;
+            if (discount == null)
+            {
+                return ServiceResult<Discount?>.ErrorResult("Discount not found", StatusCodes.Status404NotFound);
+            }
+
+            return ServiceResult<Discount?>.SuccessResult(discount);
         }
 
-        public Task<List<Discount>> GetActiveDiscountsAsync()
+        public async Task<ServiceResult<List<Discount>>> GetActiveDiscountsAsync()
         {
-            var activeDiscounts = _context.Discounts.Where(d => d.IsActive == true).ToListAsync();
-            return activeDiscounts;
+            var activeDiscounts = await _context.Discounts.Include(u => u.DiscountUnit).Where(d => d.IsActive == true).ToListAsync();
+
+            return ServiceResult<List<Discount>>.SuccessResult(activeDiscounts);
         }
 
-        public async Task<bool> ValidateDiscountCodeAsync(string code)
+        public async Task<ServiceResult<bool>> ValidateDiscountCodeAsync(string code)
         {
             // Retrieve the discount with the provided code
-            var discount = await _context.Discounts.FirstOrDefaultAsync(d => d.DiscountCode == code);
+            var result = await GetDiscountByCodeAsync(code);
 
-            // Check if the discount exists
-            if (discount == null)
+            if (result == null || result.Data == null)
             {
-                return false;
+                return ServiceResult<bool>.ErrorResult("Discount not found", StatusCodes.Status404NotFound);
+            }
+            
+            if (!result.Data.IsActive.HasValue || !result.Data.IsActive.Value)
+            {
+                return ServiceResult<bool>.ErrorResult("Discount is not active", StatusCodes.Status400BadRequest);
             }
 
-            // Check if the discount is active and within the valid date range
-            if (!discount.IsActive.HasValue || !discount.IsActive.Value)
+            if (result.Data.ValidFrom.HasValue && result.Data.ValidFrom > DateOnly.FromDateTime(DateTime.Now))
             {
-                return false;
+                return ServiceResult<bool>.ErrorResult("Discount is not yet valid", StatusCodes.Status400BadRequest);
             }
 
-            if (discount.ValidFrom.HasValue && discount.ValidFrom > DateOnly.FromDateTime(DateTime.Now))
+            if (result.Data.ValidTo.HasValue && result.Data.ValidTo < DateOnly.FromDateTime(DateTime.Now))
             {
-                return false;
+                return ServiceResult<bool>.ErrorResult("Discount has expired", StatusCodes.Status400BadRequest);
             }
 
-            if (discount.ValidTo.HasValue && discount.ValidTo < DateOnly.FromDateTime(DateTime.Now))
-            {
-                return false;
-            }
-
-            // If all checks pass, return true (discount code is valid)
-            return true;
+           return ServiceResult<bool>.SuccessResult(true, "Discount is valid");
 
         }
 
-        public async Task DeactivateDiscountAsync(int id)
+        public async Task<ServiceResult<bool>> DeactivateDiscountAsync(int id)
         {
-            var discount = await _context.Discounts.FirstOrDefaultAsync(d => d.DiscountId == id);
+            var result = await GetDiscountByIdAsync(id);
 
-            if (discount == null) {
-                throw new Exception("Discount not found");
+            if (result == null || result.Data == null)
+            {
+                return ServiceResult<bool>.ErrorResult("Discount not found", StatusCodes.Status404NotFound);
             }
 
-            discount.IsActive = false;
-            _context.Discounts.Update(discount);
-            await _context.SaveChangesAsync();
-        }
-
-        public async Task ActivateDiscountAsync(int id)
-        {
-            var discount = await _context.Discounts.FirstOrDefaultAsync(d => d.DiscountId == id);
-
-            if (discount == null)
-            {
-                throw new Exception("Discount not found");
-            }
-
-            discount.IsActive = true;
-            _context.Discounts.Update(discount);
-            await _context.SaveChangesAsync();
-        }
-
-        // Discount Unit
-        public async Task<DiscountUnit> CreateDiscountUnitAsync(CreateDiscountUnitDto discountUnitDto)
-        {
-            var discountUnit = await _context.DiscountUnits
-                .FirstOrDefaultAsync(d => d.UnitName == discountUnitDto.UnitName);
-
-            if (discountUnit != null)
-            {
-                throw new Exception("Discount unit with the same name already exists");
-            }
-
-            var newDiscountUnit = new DiscountUnit
-            {
-                UnitName = discountUnitDto.UnitName
-            };
-
-            await _context.DiscountUnits.AddAsync(newDiscountUnit);
+            result.Data.IsActive = false;
+            _context.Discounts.Update(result.Data);
             await _context.SaveChangesAsync();
 
-            return newDiscountUnit;
+            return ServiceResult<bool>.SuccessResult(true, "Discount deactivated successfully");
         }
 
-        public async Task<List<DiscountUnit>> GetAllDiscountUnitsAsync()
+        public async Task<ServiceResult<bool>> ActivateDiscountAsync(int id)
         {
-            var discountUnits = await _context.DiscountUnits.ToListAsync();
-            return discountUnits;
-        }
+            var result = await GetDiscountByIdAsync(id);
 
-        public async Task<DiscountUnit> GetDiscountUnitByIdAsync(int id)
-        {
-            var discountUnit = await _context.DiscountUnits.FirstOrDefaultAsync(d => d.UnitId == id);
-
-            if (discountUnit == null)
+            if (result == null || result.Data == null)
             {
-                throw new Exception("Discount unit not found");
+                return ServiceResult<bool>.ErrorResult("Discount not found", StatusCodes.Status404NotFound);
             }
 
-            return discountUnit;  
-        }
-
-        public async Task<DiscountUnit> UpdateDiscountUnitAsync(UpdateDiscountUnitDto discountUnitDto)
-        {
-            var discountUnit = await _context.DiscountUnits.FirstOrDefaultAsync(d => d.UnitId == discountUnitDto.UnitId);
-
-            if (discountUnit == null)
-            {
-                throw new Exception("Discount unit not found");
-            }
-
-            discountUnit.UnitName = discountUnitDto.UnitName;
-
-            _context.DiscountUnits.Update(discountUnit);
+            result.Data.IsActive = true;
+            _context.Discounts.Update(result.Data);
             await _context.SaveChangesAsync();
-            return discountUnit;
+
+            return ServiceResult<bool>.SuccessResult(true, "Discount activated successfully");
         }
-
-        public async Task DeleteDiscountUnitAsync(int id)
-        {
-            var discountUnit = await _context.DiscountUnits.FirstOrDefaultAsync(d => d.UnitId == id);
-
-            if (discountUnit == null)
-            {
-                throw new Exception("Discount unit not found");
-            }
-
-            _context.DiscountUnits.Remove(discountUnit);
-            await _context.SaveChangesAsync();
-        }
-
     }
 }

@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace FurniFusion.Dtos.ProductManager.Discount
+namespace FurniFusion.Dtos.ProductManager.DiscountUnit
 {
     public class UpdateDiscountUnitDto
     {

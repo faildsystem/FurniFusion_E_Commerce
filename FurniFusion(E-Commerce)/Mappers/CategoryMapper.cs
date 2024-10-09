@@ -14,7 +14,8 @@ namespace FurniFusion.Mappers
                 CreatedBy = category.CreatedBy,
                 CreatedAt = category.CreatedAt,
                 UpdatedBy = category.UpdatedBy,
-                UpdatedAt = category.UpdatedAt   
+                UpdatedAt = category.UpdatedAt,
+                Products = category.Products.Select(p => p.ToProductDto()).ToList()
             };
         }
     }

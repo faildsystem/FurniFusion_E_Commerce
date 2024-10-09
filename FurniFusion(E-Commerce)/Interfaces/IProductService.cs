@@ -6,12 +6,12 @@ namespace FurniFusion.Interfaces
 {
     public interface IProductService
     {
-        Task<List<Product>> GetAllProductsAsync(ProductFilter filter);
-        Task<Product> GetProductByIdAsync(int id);
-        Task<Product> CreateProductAsync(CreateProductDto productDto, string creatorId);
-        Task<Product> UpdateProductAsync(UpdateProductDto productDto, string updatorId);
-        Task DeleteProductAsync(int id);
-        Task<Product> ApplyDiscountToProduct(int productId, int discountId);
+        Task<ServiceResult<List<Product>>> GetAllProductsAsync(ProductFilter filter);
+        Task<ServiceResult<Product>> GetProductByIdAsync(int? id);
+        Task<ServiceResult<Product>> CreateProductAsync(CreateProductDto productDto, string creatorId);
+        Task<ServiceResult<Product>> UpdateProductAsync(UpdateProductDto productDto, string updatorId);
+        Task<ServiceResult<bool>> DeleteProductAsync(int id);
+        Task<ServiceResult<Product>> ApplyDiscountToProductAsync(int productId, int discountId);
 
     }
 }

@@ -1,2 +1,10 @@
 - apply repository pattern to seperate the service layer from the database layer
 - optimize get all cart items qurery (cart service file)
+- clear cart 
+- avg reviews from all reviews
+- discount
+- filter products by dates
+- only one address has true primary addresss
+- inventory controller
+- product stock quantity from inventory
+- order controller

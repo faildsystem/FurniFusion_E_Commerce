@@ -1,4 +1,4 @@
-﻿using FurniFusion.Dtos.ProductManager.Discount;
+﻿using FurniFusion.Dtos.ProductManager.DiscountUnit;
 using FurniFusion.Models;
 
 namespace FurniFusion.Mappers

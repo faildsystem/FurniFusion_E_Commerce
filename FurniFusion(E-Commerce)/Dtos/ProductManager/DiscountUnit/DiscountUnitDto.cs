@@ -1,4 +1,4 @@
-﻿namespace FurniFusion.Dtos.ProductManager.Discount
+﻿namespace FurniFusion.Dtos.ProductManager.DiscountUnit
 {
     public class DiscountUnitDto
     {

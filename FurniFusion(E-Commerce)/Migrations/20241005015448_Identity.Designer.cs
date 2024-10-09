@@ -1262,7 +1262,7 @@ namespace FurniFusion.Migrations
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
                     b.HasKey("UserId", "IsPrimaryAddress")
-                        .HasName("User_Address_pkey");
+                        .HasName("Address_id_pkey");
 
                     b.ToTable("User_Address", (string)null);
                 });

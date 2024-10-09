@@ -19,17 +19,163 @@ namespace FurniFusion.Controllers
         {
             _discountService = discountService;
         }
-        
-        // Discount
+
         [HttpGet("getDiscounts")]
         public async Task<IActionResult> GetDiscounts([FromQuery] DiscountFilter filter)
         {
-            var discounts = await _discountService.GetAllDiscountsAsync(filter);
-            var discountsDto = discounts.Select(d => d.ToDiscountDto()).ToList();
-            var TotalDiscounts = discounts.Count;
+            try {
 
+                var result = await _discountService.GetAllDiscountsAsync(filter);
 
-            return Ok(new { TotalDiscounts, discountsDto });
+                if (!result.Success)
+                    return StatusCode(result.StatusCode, new { message = result.Message });
+
+                var discounts = result.Data.Select(d => d.ToDiscountDto()).ToList();
+                var TotalDiscounts = result.Data.Count;
+                
+                return Ok(new { TotalDiscounts, discounts });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = ex.Message });
+            }
+        }
+
+        [HttpGet("getDiscountById/{id}")]
+        public async Task<IActionResult> GetDiscountById(int id)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            try
+            {
+                var result = await _discountService.GetDiscountByIdAsync(id);
+
+                if(!result.Success)
+                    return StatusCode(result.StatusCode, new { message = result.Message });
+
+                return Ok(result.Data.ToDiscountDto());
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = ex.Message });
+            }
+        }
+
+        [HttpGet("getActiveDiscounts")]
+        public async Task<IActionResult> GetActiveDiscounts()
+        {
+            try { 
+                var result = await _discountService.GetActiveDiscountsAsync();
+
+                if (!result.Success)
+                    return StatusCode(result.StatusCode, new { message = result.Message });
+
+                var discountsDto = result.Data.Select(d => d.ToDiscountDto()).ToList();
+                var TotalDiscounts = result.Data.Count;
+
+                return Ok(new { TotalDiscounts, discounts = discountsDto });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = ex.Message });
+            }
+        }
+
+        [HttpGet("getDiscountByCode/{code}")]
+        public async Task<IActionResult> GetDiscountByCode(string code)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            try
+            {
+                var result = await _discountService.GetDiscountByCodeAsync(code);
+
+                if (!result.Success)
+                    return StatusCode(result.StatusCode, new { message = result.Message });
+
+                var discount = result.Data.ToDiscountDto();
+
+                return Ok(new { discount });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = ex.Message });
+            }
+        }
+
+        [HttpGet("validateDiscountCode/{code}")]
+        public async Task<IActionResult> ValidateDiscountCode(string code)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            try
+            {
+                var result = await _discountService.ValidateDiscountCodeAsync(code);
+
+                if (!result.Success)
+                    return StatusCode(result.StatusCode, new { message = result.Message });
+
+                return Ok(new { result.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = ex.Message });
+            }    
+        }
+
+        [HttpPut("deactivateDiscount/{id}")]
+        public async Task<IActionResult> DeactivateDiscount(int id)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            try
+            {
+                var result = await _discountService.DeactivateDiscountAsync(id);
+
+                if (!result.Success)
+                    return StatusCode(result.StatusCode, new { message = result.Message });
+
+                return Ok(new { result.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = ex.Message });
+            }
+        }
+
+        [HttpPut("activateDiscount/{id}")]
+        public async Task<IActionResult> ActivateDiscount(int id)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            try
+            {
+                var result = await _discountService.ActivateDiscountAsync(id);
+
+                if (!result.Success)
+                    return StatusCode(result.StatusCode, new { message = result.Message });
+
+                return Ok(new { result.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = ex.Message });
+            }
         }
 
         [HttpPost("createDiscount")]
@@ -41,18 +187,25 @@ namespace FurniFusion.Controllers
                 return BadRequest(ModelState);
             }
 
+            var creatorId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            
+            if (string.IsNullOrEmpty(creatorId))
+                return Unauthorized(new { message = "User not found" });
+            
             try
             {
-                var creatorId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-                var discount = await _discountService.CreateDiscountAsync(discountDto, creatorId!);
+                var result = await _discountService.CreateDiscountAsync(discountDto, creatorId!);
 
-                return Ok(discount.ToDiscountDto());
+                if (!result.Success)
+                    return StatusCode(result.StatusCode, new { message = result.Message });
+
+                return CreatedAtAction(nameof(CreateDiscount), new { id = result.Data!.DiscountId }, result.Data.ToDiscountDto());
 
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                return BadRequest(new { message = e.Message });
+                return StatusCode(500, new { message = ex.Message });
             }
 
         }
@@ -65,51 +218,32 @@ namespace FurniFusion.Controllers
                 return BadRequest(ModelState);
             }
 
+            var updatorId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (string.IsNullOrEmpty(updatorId))
+                return Unauthorized(new { message = "User not found" });
+
             try
             {
-                var updatorId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                var result = await _discountService.UpdateDiscountAsync(discountDto, updatorId!);
 
-                var discount = await _discountService.UpdateDiscountAsync(discountDto, updatorId!);
+                if (!result.Success)
+                    return StatusCode(result.StatusCode, new { message = result.Message });
 
-                return Ok(discount.ToDiscountDto());
+                var discount = result.Data.ToDiscountDto();
+
+                return Ok(new { discount });
 
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                return BadRequest(new { message = e.Message });
+                return StatusCode(500, new { message = ex.Message });
             }
         }
 
         [HttpDelete("deleteDiscount/{id}")]
         public async Task<IActionResult> DeleteDiscount(int id)
         {
-            try
-            {
-                await _discountService.DeleteDiscountAsync(id);
-                return Ok(new { message = "Discount deleted" });
-            }
-            catch (Exception e)
-            {
-                return BadRequest(new { message = e.Message });
-            }
-        }
-
-        // Discount Unit
-        [HttpGet("getDiscountUnits")]
-        public async Task<IActionResult> GetDiscountUnits()
-        {
-            var discountUnits = await _discountService.GetAllDiscountUnitsAsync();
-
-            var discountUnitsDto = discountUnits.Select(d => d.ToDiscountUnitDto()).ToList();
-
-            var TotalDiscountUnits = discountUnits.Count;
-
-            return Ok(new { TotalDiscountUnits, discountUnitsDto });
-        }
-        
-        [HttpPost("createDiscountUnit")]
-        public async Task<IActionResult> CreateDiscountUnit([FromBody] CreateDiscountUnitDto discountUnitDto)
-        {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
@@ -117,51 +251,17 @@ namespace FurniFusion.Controllers
 
             try
             {
-                var discountUnit = await _discountService.CreateDiscountUnitAsync(discountUnitDto);
+                var result = await _discountService.DeleteDiscountAsync(id);
 
-                return Ok(discountUnit.ToDiscountUnitDto());
+                if (!result.Success)
+                    return StatusCode(result.StatusCode, new { message = result.Message });
 
+                return Ok(new { message = "Discount deleted successfully" });
             }
             catch (Exception e)
             {
                 return BadRequest(new { message = e.Message });
             }
         }
-
-        [HttpPut("updateDiscountUnit")]
-        public async Task<IActionResult> UpdateDiscountUnit([FromBody] UpdateDiscountUnitDto discountUnitDto)
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            try
-            {
-                var discountUnit = await _discountService.UpdateDiscountUnitAsync(discountUnitDto);
-
-                return Ok(discountUnit.ToDiscountUnitDto());
-
-            }
-            catch (Exception e)
-            {
-                return BadRequest(new { message = e.Message });
-            }
-        }
-
-        [HttpDelete("deleteDiscountUnit/{id}")]
-        public async Task<IActionResult> DeleteDiscountUnit(int id)
-        {
-            try
-            {
-                await _discountService.DeleteDiscountUnitAsync(id);
-                return Ok(new { message = "Discount unit deleted" });
-            }
-            catch (Exception e)
-            {
-                return BadRequest(new { message = e.Message });
-            }
-        }
-
     }
 }

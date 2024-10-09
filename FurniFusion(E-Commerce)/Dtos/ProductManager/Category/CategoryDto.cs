@@ -1,4 +1,6 @@
-﻿namespace FurniFusion.Dtos.ProductManager.Category
+﻿using FurniFusion.Dtos.ProductManager.Product;
+
+namespace FurniFusion.Dtos.ProductManager.Category
 {
     public class CategoryDto
     {
@@ -13,6 +15,8 @@
         public string? UpdatedBy { get; set; }
 
         public DateTime? UpdatedAt { get; set; }
+
+        public List<ProductDto> Products { get; set; }
 
     }
 }

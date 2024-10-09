@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace FurniFusion.Models;
+﻿namespace FurniFusion.Models;
 
 public partial class Product
 {

@@ -1,6 +1,7 @@
 ﻿using FurniFusion.Dtos.ProductManager.Category;
 using FurniFusion.Interfaces;
 using FurniFusion.Mappers;
+using FurniFusion.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -24,18 +25,48 @@ namespace FurniFusion.Controllers
         {
             try
             {
-                var categories = await _CategoryService.GetAllCategoriesAsync();
+                var result = await _CategoryService.GetAllCategoriesAsync();
 
-                var categoriesDto = categories.Select(c => c.ToCategoryDto()).ToList();
+                if (!result.Success)
+                    return StatusCode(result.StatusCode, new { message = result.Message });
 
-                var totalItems = categories.Count();
 
-                return Ok(new { totalItems, categoriesDto });
+                var categories = result.Data.Select(c => c.ToCategoryDto()).ToList();
+
+                var totalItems = result.Data.Count();
+
+                return Ok(new { totalItems, categories });
 
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                return BadRequest(new { message = e.Message });
+                return StatusCode(500, new { message = ex.Message });
+            }
+        }
+
+        [HttpGet("getCategory/{id}")]
+        public async Task<IActionResult> GetCategory(int id)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            try
+            {
+                var result = await _CategoryService.GetCategoryByIdAsync(id);
+
+                if (!result.Success)
+                {
+                    return StatusCode(result.StatusCode, new { message = result.Message });
+                }
+
+                return Ok(result.Data.ToCategoryDto());
+
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = ex.Message });
             }
         }
 
@@ -47,18 +78,27 @@ namespace FurniFusion.Controllers
                 return BadRequest(ModelState);
             }
 
+            var creatorId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (string.IsNullOrEmpty(creatorId))
+                return Unauthorized(new { message = "User not found" });
+
+
             try
             {
-                var creatorId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                var result = await _CategoryService.CreateCategoryAsync(categoryDto, creatorId!);
 
-                var category = await _CategoryService.CreateCategoryAsync(categoryDto, creatorId!);
+                if (!result.Success)
+                    {
+                    return StatusCode(result.StatusCode, new { message = result.Message });
+                }
 
-                return Ok(category.ToCategoryDto());
+                return CreatedAtAction(nameof(CreateCategory), new { id = result.Data!.CategoryId }, result.Data.ToCategoryDto());
 
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                return BadRequest(new { message = e.Message });
+                return StatusCode(500, new { message = ex.Message });
             }
         }
 
@@ -70,32 +110,52 @@ namespace FurniFusion.Controllers
                 return BadRequest(ModelState);
             }
 
+            var updatorId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (string.IsNullOrEmpty(updatorId))
+                return Unauthorized(new { message = "User not found" });
+
             try
             {
-                var updatorId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                var result = await _CategoryService.UpdateCategoryAsync(categoryDto, updatorId!);
 
-                var category = await _CategoryService.UpdateCategoryAsync(categoryDto, updatorId!);
+                if (!result.Success)
+                {
+                    return StatusCode(result.StatusCode, new { message = result.Message });
+                }
 
-                return Ok(category.ToCategoryDto());
+                return Ok(result.Data.ToCategoryDto());
 
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                return BadRequest( new { message = e.Message });
+                return StatusCode(500, new { message = ex.Message });
             }
         }
 
         [HttpDelete("deleteCategory/{id}")]
         public async Task<IActionResult> DeleteCategory(int id)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
             try
             {
-                await _CategoryService.DeleteCategoryAsync(id);
-                return Ok(new { message = "Category deleted" });
+                var result = await _CategoryService.DeleteCategoryAsync(id);
+
+                if (!result.Success)
+                {
+                    return StatusCode(result.StatusCode, new { message = result.Message });
+                }
+
+                return Ok(new { message = "Category deleted successfully" });
+                
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                return BadRequest(new { message = e.Message });
+                return StatusCode(500, new { message = ex.Message });
             }
         }
     }

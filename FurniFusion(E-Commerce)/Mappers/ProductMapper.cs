@@ -1,5 +1,6 @@
 ﻿using FurniFusion.Models;
 using FurniFusion.Dtos.ProductManager.Product;
+using FurniFusion.Dtos.ProductManager.Discount;
 
 namespace FurniFusion.Mappers
 {
@@ -7,6 +8,7 @@ namespace FurniFusion.Mappers
     {
         public static ProductDto ToProductDto(this Product product)
         {
+
             return new ProductDto
             {
                 ProductId = product.ProductId,
@@ -24,7 +26,9 @@ namespace FurniFusion.Mappers
                 CreatedBy = product.CreatedBy,
                 UpdatedBy = product.UpdatedBy,
                 DiscountId = product.DiscountId,
+                Discount = product.Discount.ToDiscountDto(),
                 CategoryId = product.CategoryId,
+                Category = product.Category.ToCategoryDto(),
                 AverageRating = product.AverageRating
             };
         }

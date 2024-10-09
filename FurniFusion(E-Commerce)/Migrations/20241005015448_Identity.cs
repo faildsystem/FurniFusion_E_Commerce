@@ -459,7 +459,7 @@ namespace FurniFusion.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("User_Address_pkey", x => new { x.user_id, x.is_primary_address });
+                    table.PrimaryKey("Address_id_pkey", x => new { x.user_id, x.is_primary_address });
                     table.ForeignKey(
                         name: "User_Address_user_id_fkey",
                         column: x => x.user_id,

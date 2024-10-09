@@ -16,9 +16,9 @@ namespace FurniFusion.Services
             _context = context;
         }
 
-        public async Task<List<Product>> GetAllProductsAsync(ProductFilter filter)
+        public async Task<ServiceResult<List<Product>>> GetAllProductsAsync(ProductFilter filter)
         {
-            var products = _context.Products.AsQueryable();
+            var products = _context.Products.Include(c => c.Category).Include(d => d.Discount).AsQueryable();
 
             if (filter.Id > 0)
             {
@@ -80,17 +80,19 @@ namespace FurniFusion.Services
 
             var productsList = await products.Skip(skipNumber).Take(filter.PageSize).ToListAsync();
 
-            return await products.Skip(skipNumber).Take(filter.PageSize).ToListAsync();
+            var result = await products.Skip(skipNumber).Take(filter.PageSize).ToListAsync();
+
+            return ServiceResult<List<Product>>.SuccessResult(result);
         }
 
-        public async Task<Product> CreateProductAsync(CreateProductDto productDto, string creatorId)
+        public async Task<ServiceResult<Product>> CreateProductAsync(CreateProductDto productDto, string creatorId)
         {
             var category = await _context.Categories
-        .FirstOrDefaultAsync(c => c.CategoryId == productDto.CategoryId);
+                             .FirstOrDefaultAsync(c => c.CategoryId == productDto.CategoryId);
 
             if (category == null)
             {
-                throw new Exception("Category does not exist");
+                return ServiceResult<Product>.ErrorResult("Category not found", StatusCodes.Status404NotFound);
             }
 
             var product = await _context.Products
@@ -103,7 +105,7 @@ namespace FurniFusion.Services
                 );
 
             if (product != null) {
-                throw new Exception("Product with the same attributes already exists");
+                return ServiceResult<Product>.ErrorResult("Product with the same attributes already exists", StatusCodes.Status409Conflict);
             }
 
             var newProduct = new Product
@@ -127,116 +129,105 @@ namespace FurniFusion.Services
             await _context.Products.AddAsync(newProduct);
             await _context.SaveChangesAsync();
 
-            return newProduct;
+            return ServiceResult<Product>.SuccessResult(newProduct, "Product created successfully", StatusCodes.Status201Created);
         }
 
-        public async Task<Product> UpdateProductAsync(UpdateProductDto productDto, string updatorId)
+        public async Task<ServiceResult<Product>> UpdateProductAsync(UpdateProductDto productDto, string updatorId)
         {
-            var product = await _context.Products.FirstOrDefaultAsync(p => p.ProductId == productDto.ProductId);
+            var result = await GetProductByIdAsync(productDto.ProductId);
 
-            if (product == null)
+            if (result == null || result.Data == null)
             {
-                throw new Exception("Product not found");
+                return ServiceResult<Product>.ErrorResult("Product not found", StatusCodes.Status404NotFound);
             }
 
-            product.ProductName = productDto.ProductName ?? product.ProductName;
-            product.Dimensions = productDto.Dimensions ?? product.Dimensions;
-            product.Price = productDto.Price ?? product.Price;
-            product.StockQuantity = productDto.StockQuantity ?? product.StockQuantity;
-            product.IsAvailable = productDto.IsAvailable ?? product.IsAvailable;
-            product.Weight = productDto.Weight ?? product.Weight;
-            product.Description = productDto.Description ?? product.Description;
-            product.CategoryId = productDto.CategoryId ?? product.CategoryId;
-            product.UpdatedBy = updatorId;
-            product.UpdatedAt = DateTime.Now;
+            result.Data.ProductName = productDto.ProductName ?? result.Data.ProductName;
+            result.Data.Dimensions = productDto.Dimensions ?? result.Data.Dimensions;
+            result.Data.Price = productDto.Price ?? result.Data.Price;
+            result.Data.StockQuantity = productDto.StockQuantity ?? result.Data.StockQuantity;
+            result.Data.IsAvailable = productDto.IsAvailable ?? result.Data.IsAvailable;
+            result.Data.Weight = productDto.Weight ?? result.Data.Weight;
+            result.Data.Description = productDto.Description ?? result.Data.Description;
+            result.Data.CategoryId = productDto.CategoryId ?? result.Data.CategoryId;
+            result.Data.UpdatedBy = updatorId;
+            result.Data.UpdatedAt = DateTime.Now;
 
-            if (productDto.Colors!.Any())
+            if (productDto.Colors != null && productDto.Colors.Any())
             {
-                product.Colors!.AddRange(productDto.Colors!);
+                result.Data.Colors!.AddRange(productDto.Colors!);
             }
 
-            if (productDto.ImageUrls!.Any())
+            if (productDto.ImageUrls != null &&  productDto.ImageUrls.Any())
             {
-                product.ImageUrls!.AddRange(productDto.ImageUrls!);
+                result.Data.ImageUrls!.AddRange(productDto.ImageUrls!);
             }
 
-            _context.Products.Update(product);
+            _context.Products.Update(result.Data);
             await _context.SaveChangesAsync();
-            return product;
 
+            return ServiceResult<Product>.SuccessResult(result.Data, "Product updated successfully", StatusCodes.Status200OK);
         }
 
-        public async Task DeleteProductAsync(int id)
+        public async Task<ServiceResult<bool>> DeleteProductAsync(int id)
         {
-            var product = await _context.Products.FirstOrDefaultAsync(p => p.ProductId == id);
-            if (product == null)
+            var result = await GetProductByIdAsync(id);
+
+            if (result == null || result.Data == null)
             {
-                throw new Exception("Product not found");
+                return ServiceResult<bool>.ErrorResult("Product not found", StatusCodes.Status404NotFound);
             }
 
-            _context.Products.Remove(product);
+            _context.Products.Remove(result.Data);
             await _context.SaveChangesAsync();
+
+            return ServiceResult<bool>.SuccessResult(true, "Product deleted successfully");
+
         }
 
-        public async Task<Product> GetProductByIdAsync(int id)
+        public async Task<ServiceResult<Product>> GetProductByIdAsync(int? id)
         {
-            var product = await _context.Products.FirstOrDefaultAsync(p => p.ProductId == id);
+            var product = await _context.Products.Include(c => c.Category).Include(d => d.Discount).FirstOrDefaultAsync(p => p.ProductId == id);
 
             if (product == null)
             {
-                throw new Exception("Product not found");
+                return ServiceResult<Product>.ErrorResult("Product not found", StatusCodes.Status404NotFound);
             }
 
-            return product;
+            return ServiceResult<Product>.SuccessResult(product);
         }
 
-        public async Task<Product> ApplyDiscountToProduct(int productId, int discountId)
+        public async Task<ServiceResult<Product>> ApplyDiscountToProductAsync(int productId, int discountId)
         {
-            // Retrieve the product
-            var product = await GetProductByIdAsync(productId);
-            if (product == null)
+
+            var result = await GetProductByIdAsync(productId);
+
+            if (result == null || result.Data == null)
             {
-                throw new Exception($"Product with ID {productId} not found.");
+                return ServiceResult<Product>.ErrorResult($"Product with ID {productId} not found.", StatusCodes.Status404NotFound);
             }
 
-            // Retrieve the discount
             var discount = await _context.Discounts.FirstOrDefaultAsync(d => d.DiscountId == discountId);
+
             if (discount == null)
             {
-                throw new Exception($"Discount with ID {discountId} not found.");
+                return ServiceResult<Product>.ErrorResult($"Discount with ID {discountId} not found.", StatusCodes.Status404NotFound);
             }
 
-            // Check if discount is active and valid
             if (discount.IsActive == false || discount.ValidFrom > DateOnly.FromDateTime(DateTime.Now) || discount.ValidTo < DateOnly.FromDateTime(DateTime.Now))
             {
-                throw new Exception("Discount is not valid or active.");
+                return ServiceResult<Product>.ErrorResult("Discount is not active or valid", StatusCodes.Status400BadRequest);
             }
 
-            // Apply discount to product
-            product.DiscountId = discount.DiscountId;
+            result.Data.DiscountId = discount.DiscountId;
 
-            var discountUnit = await _context.DiscountUnits.FirstOrDefaultAsync(du => du.UnitId == discount.DiscountUnitId);
-            
-            // Update the product price
-            if (discount.DiscountValue.HasValue)
-            {
-                if (discountUnit!.UnitName == "%")
-                {
-                    var discountTotalValue = product.Price * (discount.DiscountValue.Value / 100);
+            result.Data.Discount = discount;
 
-                    product.Price -= (discountTotalValue <= discount.MaxAmount!.Value) ? discountTotalValue : discount.MaxAmount.Value; 
-                }
-                else if (discountUnit.UnitName  == "$")
-                {
-                    product.Price -= discount.DiscountValue.Value;
-                }
-            }
+            discount.Products.Add(result.Data);
 
-            // Update product in database
-            _context.Products.Update(product);
+            _context.Products.Update(result.Data);
             await _context.SaveChangesAsync();
 
-            return product;
+            return ServiceResult<Product>.SuccessResult(result.Data, "Discount applied to product successfully", StatusCodes.Status200OK);
         }
     }
 }

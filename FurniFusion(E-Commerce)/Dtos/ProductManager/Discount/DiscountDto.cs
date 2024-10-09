@@ -1,4 +1,6 @@
-﻿namespace FurniFusion.Dtos.ProductManager.Discount
+﻿using FurniFusion.Dtos.ProductManager.DiscountUnit;
+
+namespace FurniFusion.Dtos.ProductManager.Discount
 {
     public class DiscountDto
     {
@@ -9,6 +11,8 @@
         public decimal? DiscountValue { get; set; }
 
         public int? DiscountUnitId { get; set; }
+
+        public DiscountUnitDto? DiscountUnit { get; set; }
 
         public DateOnly? ValidFrom { get; set; }
 

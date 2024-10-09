@@ -9,7 +9,7 @@ namespace FurniFusion.Controllers.Cart
 {
     [Authorize]
     [ApiController]
-    [Route("api/[controller]/{action}")]
+    [Route("api/[controller]/[action]")]
     public class CartItemController : ControllerBase
     {
         private readonly ICartItemService _cartItemService;
