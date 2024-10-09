@@ -9,7 +9,7 @@ namespace FurniFusion.Dtos.ProductManager.Product
 
         public string? ProductName { get; set; }
 
-        public List<string>? ImageUrls { get; set; }
+        public List<IFormFile>? Images { get; set; }
 
         public string? Dimensions { get; set; }
 
