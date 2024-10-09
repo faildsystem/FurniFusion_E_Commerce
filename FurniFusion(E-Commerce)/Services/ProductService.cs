@@ -102,14 +102,17 @@ namespace FurniFusion.Services
                     p.Colors == productDto.Colors
                 );
 
-            if (product != null) {
+            if (product != null)
+            {
                 throw new Exception("Product with the same attributes already exists");
             }
+
+            var productImagesUrls = await UploadProductImagesAsync(productDto.Images!, productDto.ProductName!);
 
             var newProduct = new Product
             {
                 ProductName = productDto.ProductName!,
-                ImageUrls = productDto.ImageUrls,
+                ImageUrls = productImagesUrls,
                 Dimensions = productDto.Dimensions,
                 Price = productDto.Price,
                 StockQuantity = productDto.StockQuantity,
@@ -139,6 +142,14 @@ namespace FurniFusion.Services
                 throw new Exception("Product not found");
             }
 
+            if (productDto.Images != null && productDto.Images.Any())
+            {
+                RemoveProductImagesFolder(product.ProductName);
+                var productImagesUrls = await UploadProductImagesAsync(productDto.Images!, product.ProductName!);
+
+                product.ImageUrls = productImagesUrls;
+            }
+
             product.ProductName = productDto.ProductName ?? product.ProductName;
             product.Dimensions = productDto.Dimensions ?? product.Dimensions;
             product.Price = productDto.Price ?? product.Price;
@@ -150,15 +161,11 @@ namespace FurniFusion.Services
             product.UpdatedBy = updatorId;
             product.UpdatedAt = DateTime.Now;
 
-            if (productDto.Colors!.Any())
+            if (productDto.Colors != null && productDto.Colors!.Any())
             {
                 product.Colors!.AddRange(productDto.Colors!);
             }
 
-            if (productDto.ImageUrls!.Any())
-            {
-                product.ImageUrls!.AddRange(productDto.ImageUrls!);
-            }
 
             _context.Products.Update(product);
             await _context.SaveChangesAsync();
@@ -216,7 +223,7 @@ namespace FurniFusion.Services
             product.DiscountId = discount.DiscountId;
 
             var discountUnit = await _context.DiscountUnits.FirstOrDefaultAsync(du => du.UnitId == discount.DiscountUnitId);
-            
+
             // Update the product price
             if (discount.DiscountValue.HasValue)
             {
@@ -224,9 +231,9 @@ namespace FurniFusion.Services
                 {
                     var discountTotalValue = product.Price * (discount.DiscountValue.Value / 100);
 
-                    product.Price -= (discountTotalValue <= discount.MaxAmount!.Value) ? discountTotalValue : discount.MaxAmount.Value; 
+                    product.Price -= (discountTotalValue <= discount.MaxAmount!.Value) ? discountTotalValue : discount.MaxAmount.Value;
                 }
-                else if (discountUnit.UnitName  == "$")
+                else if (discountUnit.UnitName == "$")
                 {
                     product.Price -= discount.DiscountValue.Value;
                 }
@@ -238,5 +245,54 @@ namespace FurniFusion.Services
 
             return product;
         }
+
+        public async Task<List<string>> UploadProductImagesAsync(List<IFormFile> productImages, string productName)
+        {
+            // List to store the URLs of the uploaded images
+            var uploadedImageUrls = new List<string>();
+
+            // Ensure the folder path exists
+            var folderPath = Path.Combine("wwwroot", "images", "products", productName);
+            if (!Directory.Exists(folderPath))
+            {
+                Directory.CreateDirectory(folderPath);
+            }
+
+            foreach (var file in productImages)
+            {
+                // Get the file extension
+                var extension = Path.GetExtension(file.FileName).ToLower();
+
+                // Generate a unique file name for each image
+                var uniqueFileName = $"{Guid.NewGuid()}{extension}";
+                var filePath = Path.Combine(folderPath, uniqueFileName);
+
+                // Save the file to the server
+                using (var fileStream = new FileStream(filePath, FileMode.Create))
+                {
+                    await file.CopyToAsync(fileStream);
+                }
+
+                // Generate the image URL and add it to the list
+                uploadedImageUrls.Add(filePath);
+
+            }
+            // Return the list of uploaded image URLs
+            return uploadedImageUrls;
+        }
+
+        private void RemoveProductImagesFolder(string productName)
+        {
+            var folderPath = Path.Combine("wwwroot", "images", "products", productName);
+
+            Console.WriteLine(folderPath+"\n\n\n\n\n\n");
+
+            if (Directory.Exists(folderPath))
+            {
+                Directory.Delete(folderPath, true);
+            }
+
+        }
+
     }
 }

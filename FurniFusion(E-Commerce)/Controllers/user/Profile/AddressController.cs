@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
-namespace FurniFusion.Controllers.user
+namespace FurniFusion.Controllers.user.Profile
 {
     [ApiController]
     [Authorize]

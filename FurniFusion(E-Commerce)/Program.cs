@@ -119,6 +119,7 @@ namespace FurniFusion
             // Register ChatService
             builder.Services.AddTransient<IEmailService, EmailService>();
             builder.Services.AddScoped<IPhoneService, PhoneService>();
+            builder.Services.AddScoped<IProfileImageService, ProfileImageService>();
             builder.Services.AddScoped<IReviewService, ReviewService>();
             builder.Services.AddScoped<IAddressService, AddressService>();
             builder.Services.AddScoped<ICartService, CartService>();
