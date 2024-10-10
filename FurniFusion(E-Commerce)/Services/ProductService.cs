@@ -4,6 +4,7 @@ using FurniFusion.Models;
 using FurniFusion.Queries;
 using FurniFusion.Dtos.ProductManager.Product;
 using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
 
 namespace FurniFusion.Services
 {
@@ -154,15 +155,18 @@ namespace FurniFusion.Services
             result.Data.UpdatedBy = updatorId;
             result.Data.UpdatedAt = DateTime.Now;
 
-            if (productDto.Colors != null && productDto.Colors!.Any())
+      
             if (productDto.Colors != null && productDto.Colors.Any())
             {
-                result.Data.Colors!.AddRange(productDto.Colors!);
+                result.Data.Colors!.AddRange(productDto.Colors);
             }
 
-            if (productDto.ImageUrls != null &&  productDto.ImageUrls.Any())
+            if (productDto.Images != null && productDto.Images.Any())
             {
-                result.Data.ImageUrls!.AddRange(productDto.ImageUrls!);
+                RemoveProductImagesFolder(result.Data.ProductName);
+                var productImagesUrls = await UploadProductImagesAsync(productDto.Images!, result.Data.ProductName!);
+
+                result.Data.ImageUrls = productImagesUrls;
             }
 
             _context.Products.Update(result.Data);
@@ -231,6 +235,54 @@ namespace FurniFusion.Services
             await _context.SaveChangesAsync();
 
             return ServiceResult<Product>.SuccessResult(result.Data, "Discount applied to product successfully", StatusCodes.Status200OK);
+        }
+
+        public async Task<List<string>> UploadProductImagesAsync(List<IFormFile> productImages, string productName)
+        {
+            // List to store the URLs of the uploaded images
+            var uploadedImageUrls = new List<string>();
+
+            // Ensure the folder path exists
+            var folderPath = Path.Combine("wwwroot", "images", "products", productName);
+            if (!Directory.Exists(folderPath))
+            {
+                Directory.CreateDirectory(folderPath);
+            }
+
+            foreach (var file in productImages)
+            {
+                // Get the file extension
+                var extension = Path.GetExtension(file.FileName).ToLower();
+
+                // Generate a unique file name for each image
+                var uniqueFileName = $"{Guid.NewGuid()}{extension}";
+                var filePath = Path.Combine(folderPath, uniqueFileName);
+
+                // Save the file to the server
+                using (var fileStream = new FileStream(filePath, FileMode.Create))
+                {
+                    await file.CopyToAsync(fileStream);
+                }
+
+                // Generate the image URL and add it to the list
+                uploadedImageUrls.Add(filePath);
+
+            }
+            // Return the list of uploaded image URLs
+            return uploadedImageUrls;
+        }
+
+        private void RemoveProductImagesFolder(string productName)
+        {
+            var folderPath = Path.Combine("wwwroot", "images", "products", productName);
+
+            Console.WriteLine(folderPath + "\n\n\n\n\n\n");
+
+            if (Directory.Exists(folderPath))
+            {
+                Directory.Delete(folderPath, true);
+            }
+
         }
     }
 }
