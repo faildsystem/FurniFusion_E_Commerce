@@ -16,6 +16,9 @@ namespace FurniFusion.Controllers
     {
         private readonly IProductService _productService;
 
+
+
+
         public ProductController(IProductService productService)
         {
             _productService = productService;
@@ -74,7 +77,7 @@ namespace FurniFusion.Controllers
         }
 
         [HttpPost("createProduct")]
-        public async Task<IActionResult> CreateProduct([FromBody] CreateProductDto productDto)
+        public async Task<IActionResult> CreateProduct([FromForm] CreateProductDto productDto)
         {
 
             if (!ModelState.IsValid)
@@ -106,7 +109,7 @@ namespace FurniFusion.Controllers
         }
 
         [HttpPut("updateProduct")]
-        public async Task<IActionResult> UpdateProduct([FromBody] UpdateProductDto productDto)
+        public async Task<IActionResult> UpdateProduct([FromForm] UpdateProductDto productDto)
         {
             if (!ModelState.IsValid)
             {

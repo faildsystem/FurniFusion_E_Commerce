@@ -742,7 +742,7 @@
 //                        .HasColumnType("integer")
 //                        .HasColumnName("discount_id");
 
-//                    b.Property<List<string>>("ImageUrls")
+//                    b.Property<List<string>>("Images")
 //                        .ValueGeneratedOnAdd()
 //                        .HasColumnType("text[]")
 //                        .HasColumnName("image_urls")

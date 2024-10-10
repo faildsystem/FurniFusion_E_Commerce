@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using FurniFusion.Attributes;
+using System.ComponentModel.DataAnnotations;
 
 namespace FurniFusion.Dtos.ProductManager.Product
 {
@@ -8,7 +9,9 @@ namespace FurniFusion.Dtos.ProductManager.Product
         public string? ProductName { get; set; }
 
         [Required]
-        public List<string>? ImageUrls { get; set; }
+        //[MaxFileSize]
+        //[AllowedFileExtensions]
+        public List<IFormFile>? Images { get; set; }
 
         [Required]
         public string? Dimensions { get; set; }

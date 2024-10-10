@@ -108,10 +108,12 @@ namespace FurniFusion.Services
                 return ServiceResult<Product>.ErrorResult("Product with the same attributes already exists", StatusCodes.Status409Conflict);
             }
 
+            var productImagesUrls = await UploadProductImagesAsync(productDto.Images!, productDto.ProductName!);
+
             var newProduct = new Product
             {
                 ProductName = productDto.ProductName!,
-                ImageUrls = productDto.ImageUrls,
+                ImageUrls = productImagesUrls,
                 Dimensions = productDto.Dimensions,
                 Price = productDto.Price,
                 StockQuantity = productDto.StockQuantity,
@@ -152,6 +154,7 @@ namespace FurniFusion.Services
             result.Data.UpdatedBy = updatorId;
             result.Data.UpdatedAt = DateTime.Now;
 
+            if (productDto.Colors != null && productDto.Colors!.Any())
             if (productDto.Colors != null && productDto.Colors.Any())
             {
                 result.Data.Colors!.AddRange(productDto.Colors!);

@@ -1,123 +1,139 @@
-﻿using FurniFusion.Models;
-using FurniFusion.Dtos.Profile.Phone;
-using FurniFusion.Interfaces;
-using FurniFusion.Mappers;
+﻿using FurniFusion.Interfaces;
+using FurniFusion.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
-namespace FurniFusion.Controllers.Profile
+namespace FurniFusion.Controllers.user
 {
-    [Authorize]
     [ApiController]
     [Route("api/[controller]/[action]")]
-    public class PhoneController : ControllerBase
+    [Authorize]
+    public class WishlistController : ControllerBase
     {
-        private readonly IPhoneService _phoneService;
 
+        private readonly IWishlistService _wishlistService;
 
-        public PhoneController(IPhoneService phoneService)
+        public WishlistController(IWishlistService whishlistService)
         {
-            _phoneService = phoneService;
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> AddPhone([FromBody] CreatePhoneDto phoneDto)
-        {
-
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId))
-                return Unauthorized(new { message = "User not found" });
-
-            var phone = phoneDto.ToUserPhoneNumber(userId);
-
-            try
-            {
-                var result = await _phoneService.AddPhoneAsync(phone, userId);
-
-                if (!result.Success)
-                    return StatusCode(result.StatusCode, new { message = result.Message });
-
-                return Ok(result.Data.ToPhoneDto());
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = ex.Message });
-            }
+            _wishlistService = whishlistService;
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetPhones()
+        public async Task<IActionResult> GetWishlist()
         {
+
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
             if (string.IsNullOrEmpty(userId))
                 return Unauthorized(new { message = "User not found" });
 
+
             try
             {
-                var result = await _phoneService.GetAllPhoneByUserIdAsync(userId);
+
+                var result = await _wishlistService.GetWishlistAsync(userId);
+
 
                 if (!result.Success)
                     return StatusCode(result.StatusCode, new { message = result.Message });
 
-                return Ok(result.Data.Select(p => p.ToPhoneDto()).ToList());
+                return Ok(result.Data!.WishlistItems);
+            }
 
+            catch (Exception ex)
+            {
+
+                return StatusCode(500, new { message = ex.Message });
+            }
+
+
+        }
+
+        [HttpPost("{productId}")]
+        public async Task<IActionResult> AddWishlistItem([FromRoute] int productId)
+        {
+
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrEmpty(userId))
+                return Unauthorized(new { message = "User not found" });
+
+
+            try
+            {
+
+                var result = await _wishlistService.AddWishlistItemAsync(productId, userId);
+                if (!result.Success)
+                    return StatusCode(result.StatusCode, new { message = result.Message });
+
+
+                return StatusCode(result.StatusCode, new { message = result.Message });
             }
             catch (Exception ex)
             {
+
                 return StatusCode(500, new { message = ex.Message });
             }
         }
 
-        [HttpGet("{phoneNumber}")]
-        public async Task<IActionResult> GetPhone([FromRoute] string phoneNumber)
+        [HttpDelete("{productId}")]
+        public async Task<IActionResult> DeleteWishlistItem([FromRoute] int productId)
         {
+
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
             if (string.IsNullOrEmpty(userId))
-                return Unauthorized();
+                return Unauthorized(new { message = "User not found" });
+
 
             try
             {
-                var result = await _phoneService.GetPhoneAsync(phoneNumber, userId);
+
+                var result = await _wishlistService.RemoveWishlistItemAsync(productId, userId);
+
 
                 if (!result.Success)
                     return StatusCode(result.StatusCode, new { message = result.Message });
 
-                return Ok(result.Data?.ToPhoneDto());
-
+                return StatusCode(result.StatusCode, new { message = result.Message });
             }
             catch (Exception ex)
             {
                 return StatusCode(500, new { message = ex.Message });
+
+
             }
         }
 
-        // Delete a phone number
-        [HttpDelete("{phoneNumber}")]
-        public async Task<IActionResult> DeletePhone([FromRoute] string phoneNumber)
+
+        [HttpDelete]
+
+        public async Task<IActionResult> DeleteAllWishlistItems()
         {
+
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
             if (string.IsNullOrEmpty(userId))
                 return Unauthorized(new { message = "User not found" });
+
+
             try
             {
 
-                var result = await _phoneService.DeletePhoneAsync(phoneNumber, userId);
+                var result = await _wishlistService.RemoveAllWishlistItemsAsync(userId);
+
 
                 if (!result.Success)
                     return StatusCode(result.StatusCode, new { message = result.Message });
 
-                return Ok(new { message = result.Message });
+                return StatusCode(result.StatusCode, new { message = result.Message });
             }
+
             catch (Exception ex)
             {
-
                 return StatusCode(500, new { message = ex.Message });
             }
-
         }
 
     }
