@@ -41,7 +41,7 @@ namespace FurniFusion.Controllers.user
                 if (!result.Success)
                     return StatusCode(result.StatusCode, new { message = result.Message });
 
-                return Ok(result.Data!.ShoppingCartItems.Select(ShoppingCartItem => ShoppingCartItem.ToCartItemDto()));
+              return Ok(result.Data!.ShoppingCartItems);
             }
             catch (Exception ex)
             {
