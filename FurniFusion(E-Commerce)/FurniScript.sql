@@ -534,3 +534,21 @@ CREATE TRIGGER discount_delete_trigger
 BEFORE DELETE ON "Discount"
 FOR EACH ROW
 EXECUTE FUNCTION log_discount_deletions();
+
+
+
+// Function to update average ratings
+CREATE OR REPLACE FUNCTION update_average_rating() RETURNS VOID AS $$
+BEGIN
+    -- Update average ratings for all products
+    UPDATE "Product" p
+    SET average_rating = COALESCE(r.avg_rating, 0)  -- Set to 0 if no reviews
+    FROM (
+        SELECT product_id, AVG(rating) AS avg_rating
+        FROM "Product_Review"
+        GROUP BY product_id
+    ) r
+    WHERE p.product_id = r.product_id;
+END;
+$$ LANGUAGE plpgsql;
+

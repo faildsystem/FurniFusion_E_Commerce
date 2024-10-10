@@ -1,4 +1,5 @@
 ﻿using FurniFusion.Data;
+using FurniFusion.Dtos.Cart;
 using FurniFusion.Dtos.CartItem;
 using FurniFusion.Interfaces;
 using FurniFusion.Models;
@@ -26,15 +27,28 @@ namespace FurniFusion.Services
 
         }
 
-        public async Task<ServiceResult<ShoppingCart?>> GetCartAsync(string userId)
+        public async Task<ServiceResult<ShoppingCartDTO?>> GetCartAsync(string userId)
         {
-            var cart = await _context.ShoppingCarts
-                                     .Include(c => c.ShoppingCartItems)  // Ensure cart items are loaded
-                                     .ThenInclude(c => c.Product)
-                                     .FirstOrDefaultAsync(c => c.UserId == userId);
+            var cartItems = await _context.ShoppingCarts
+                .Where(c => c.UserId == userId)
+                .Select(c => new ShoppingCartDTO
+                {
+                    CartId = c.CartId,
+                    ShoppingCartItems = c.ShoppingCartItems.Select(i => new ShoppingCartItemDTO
+                    {
+                        ProductId = i.Product.ProductId,
+                        ProductName = i.Product.ProductName,
+                        ImageUrl = i.Product.ImageUrls!.FirstOrDefault(),
+                        Price = i.Product.Price,
+                        Quantity = i.Quantity ?? 0,
+                        TotalPrice = i.Quantity * i.Product.Price ?? 0
+                    }).ToList()
+                })
+                .FirstOrDefaultAsync();
 
-            return ServiceResult<ShoppingCart?>.SuccessResult(cart, message: "Cart retrieved successfully", statusCode: StatusCodes.Status200OK);
+            return ServiceResult<ShoppingCartDTO?>.SuccessResult(cartItems, message: "Cart retrieved successfully", statusCode: StatusCodes.Status200OK);
         }
+
 
         public async Task<ServiceResult<ShoppingCartItem?>> AddCartItemAsync(ShoppingCartItem shoppingCartItem, string userId)
         {
@@ -44,11 +58,11 @@ namespace FurniFusion.Services
             if (product == null)
                 return ServiceResult<ShoppingCartItem?>.ErrorResult("Product not found", StatusCodes.Status404NotFound);
 
-            var cart = await GetCartAsync(userId);
+            var cart = await _context.ShoppingCarts.FirstOrDefaultAsync(c => c.UserId == userId);
 
-            shoppingCartItem.CartId = cart.Data!.CartId;
+            shoppingCartItem.CartId = cart!.CartId;
 
-            var existingCartItem = await _context.ShoppingCartItems.FirstOrDefaultAsync(s => s.ProductId == shoppingCartItem.ProductId && s.CartId == cart.Data!.CartId);
+            var existingCartItem = await _context.ShoppingCartItems.FirstOrDefaultAsync(s => s.ProductId == shoppingCartItem.ProductId && s.CartId == cart.CartId);
 
             if (existingCartItem != null)
                 return ServiceResult<ShoppingCartItem?>.ErrorResult("Cart item already exists", StatusCodes.Status400BadRequest);
@@ -63,9 +77,9 @@ namespace FurniFusion.Services
 
         public async Task<ServiceResult<ShoppingCartItem?>> DeleteCartItemAsync(int productId, string userId)
         {
-            var cart = await GetCartAsync(userId);
+             var cart = await _context.ShoppingCarts.FirstOrDefaultAsync(c => c.UserId == userId);
 
-            var existingCartItem = await _context.ShoppingCartItems.FirstOrDefaultAsync(s => s.ProductId == productId && s.CartId == cart.Data!.CartId);
+            var existingCartItem = await _context.ShoppingCartItems.FirstOrDefaultAsync(s => s.ProductId == productId && s.CartId == cart!.CartId);
 
             if (existingCartItem == null)
                 return ServiceResult<ShoppingCartItem?>.ErrorResult("Cart item not found", StatusCodes.Status404NotFound);
@@ -78,12 +92,12 @@ namespace FurniFusion.Services
 
         public async Task<ServiceResult<bool>> RemoveAllCartItems(string userId)
         {
-            var cart = await GetCartAsync(userId);
+            var cart = await _context.ShoppingCarts.FirstOrDefaultAsync(c => c.UserId == userId);
 
-            if (cart.Data!.ShoppingCartItems.Count == 0)
+            if (cart!.ShoppingCartItems.Count == 0)
                 return ServiceResult<bool>.ErrorResult("Cart is already empty", StatusCodes.Status404NotFound);
 
-            _context.ShoppingCartItems.RemoveRange(cart.Data!.ShoppingCartItems);
+            await _context.ShoppingCartItems.Where(s => s.CartId == cart.CartId).ExecuteDeleteAsync();
 
             await _context.SaveChangesAsync();
 

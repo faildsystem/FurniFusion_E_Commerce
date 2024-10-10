@@ -52,6 +52,14 @@ namespace FurniFusion.Services
             if (existingAddress != null)
                 return ServiceResult<UserAddress?>.ErrorResult("Address already exists for this user", StatusCodes.Status400BadRequest);
 
+            if (address.IsPrimaryAddress == true)
+            {
+                await _context.UserAddresses
+                                            .Where(a => a.UserId == userId)
+                                            .ExecuteUpdateAsync(address => address.SetProperty(a => a.IsPrimaryAddress, false));
+
+            }
+
             var createdAddress = await _context.UserAddresses.AddAsync(address);
             await _context.SaveChangesAsync();
 
@@ -69,6 +77,13 @@ namespace FurniFusion.Services
             if (address.UserId != userId)
                 return ServiceResult<UserAddress?>.ErrorResult("Unauthorized", StatusCodes.Status403Forbidden);
 
+            if (addressDto.IsPrimaryAddress == true)
+            {
+                await _context.UserAddresses
+                    .Where(a => a.UserId == userId)
+                    .ExecuteUpdateAsync(address => address.SetProperty(a => a.IsPrimaryAddress, false));
+            }
+
             address.Country = addressDto.Country ?? address.Country;
             address.City = addressDto.City ?? address.City;
             address.State = addressDto.State ?? address.State;
@@ -76,6 +91,7 @@ namespace FurniFusion.Services
             address.PostalCode = addressDto.PostalCode ?? address.PostalCode;
             address.IsPrimaryAddress = addressDto.IsPrimaryAddress ?? address.IsPrimaryAddress;
             address.UpdatedAt = DateTime.Now;
+
 
             await _context.SaveChangesAsync();
 
