@@ -43,6 +43,8 @@ namespace FurniFusion.Controllers
 
                 var TotalProducts = result.Data.Count;
 
+                Console.WriteLine(TotalProducts);
+
                 return Ok(new { TotalProducts, products });
 
             }

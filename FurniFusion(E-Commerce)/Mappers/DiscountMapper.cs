@@ -7,7 +7,6 @@ namespace FurniFusion.Mappers
     {
         public static DiscountDto ToDiscountDto(this Discount discount)
         {
-
             return new DiscountDto
             {
                 DiscountId = discount.DiscountId,
@@ -22,7 +21,8 @@ namespace FurniFusion.Mappers
                 CreatedBy = discount.CreatedBy,
                 UpdatedBy = discount.UpdatedBy,
                 CreatedAt = discount.CreatedAt,
-                UpdatedAt = discount.UpdatedAt
+                UpdatedAt = discount.UpdatedAt,
+                Products = discount.Products.Select(p => p.ToProductDto()).ToList()
             };
         }
     }

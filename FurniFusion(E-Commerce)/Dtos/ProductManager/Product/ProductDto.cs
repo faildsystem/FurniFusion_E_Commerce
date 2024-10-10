@@ -1,5 +1,6 @@
 ﻿using FurniFusion.Dtos.ProductManager.Category;
 using FurniFusion.Dtos.ProductManager.Discount;
+using FurniFusion.Dtos.Review;
 
 namespace FurniFusion.Dtos.ProductManager.Product
 {
@@ -25,6 +26,10 @@ namespace FurniFusion.Dtos.ProductManager.Product
 
         public bool? IsAvailable { get; set; }
 
+        public decimal? AverageRating { get; set; }
+
+        public ICollection<ReviewDto>? Reviews { get; set; }
+
         public DateTime? CreatedAt { get; set; }
 
         public DateTime? UpdatedAt { get; set; }
@@ -35,12 +40,11 @@ namespace FurniFusion.Dtos.ProductManager.Product
 
         public int? DiscountId { get; set; }
 
-        public DiscountDto? Discount { get; set; }
+        //public DiscountDto? DiscountObj { get; set; }
 
         public int? CategoryId { get; set; }
 
-        public CategoryDto? Category { get; set; }
+        //public CategoryDto? Category { get; set; }
 
-        public decimal? AverageRating { get; set; }
     }
 }

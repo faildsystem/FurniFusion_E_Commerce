@@ -4,7 +4,6 @@ using FurniFusion.Models;
 using FurniFusion.Queries;
 using FurniFusion.Dtos.ProductManager.Product;
 using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
 
 namespace FurniFusion.Services
 {
@@ -19,7 +18,10 @@ namespace FurniFusion.Services
 
         public async Task<ServiceResult<List<Product>>> GetAllProductsAsync(ProductFilter filter)
         {
-            var products = _context.Products.Include(c => c.Category).Include(d => d.Discount).AsQueryable();
+            var products = _context.Products
+                //.Include(p => p.Discount)
+                .Include(p => p.ProductReviews)
+                .AsQueryable();
 
             if (filter.Id > 0)
             {
@@ -76,10 +78,7 @@ namespace FurniFusion.Services
                 products = products.Where(x => x.UpdatedBy == filter.UpdatedBy);
             }
 
-
             var skipNumber = (filter.PageNumber - 1) * filter.PageSize;
-
-            var productsList = await products.Skip(skipNumber).Take(filter.PageSize).ToListAsync();
 
             var result = await products.Skip(skipNumber).Take(filter.PageSize).ToListAsync();
 
@@ -193,7 +192,10 @@ namespace FurniFusion.Services
 
         public async Task<ServiceResult<Product>> GetProductByIdAsync(int? id)
         {
-            var product = await _context.Products.Include(c => c.Category).Include(d => d.Discount).FirstOrDefaultAsync(p => p.ProductId == id);
+            var product = await _context.Products
+                //.Include(p => p.Discount)
+                .Include(p => p.ProductReviews)
+                .FirstOrDefaultAsync(p => p.ProductId == id);
 
             if (product == null)
             {

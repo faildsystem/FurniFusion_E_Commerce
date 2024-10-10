@@ -19,7 +19,7 @@ namespace FurniFusion.Services
         {
 
             var categories =  await _context.Categories.Include(p => p.Products).ToListAsync();
-            
+
             return ServiceResult<List<Category>>.SuccessResult(categories);
         }
 

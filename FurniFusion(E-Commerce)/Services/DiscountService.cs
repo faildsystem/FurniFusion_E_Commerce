@@ -19,7 +19,10 @@ namespace FurniFusion.Services
         // Discount
         public async Task<ServiceResult<List<Discount>>> GetAllDiscountsAsync(DiscountFilter filter)
         {
-            var discounts = _context.Discounts.Include(u => u.DiscountUnit).AsQueryable();
+            var discounts = _context.Discounts
+                .Include(d => d.DiscountUnit)
+                .Include(d => d.Products)
+                .AsQueryable();
 
             if (filter.DiscountId > 0)
             {
@@ -171,7 +174,10 @@ namespace FurniFusion.Services
 
         public async Task<ServiceResult<Discount>> GetDiscountByIdAsync(int? id)
         {
-            var discount = await _context.Discounts.Include(u => u.DiscountUnit).FirstOrDefaultAsync(p => p.DiscountId == id);
+            var discount = await _context.Discounts
+                .Include(d => d.DiscountUnit)
+                .Include(d => d.Products)
+                .FirstOrDefaultAsync(d => d.DiscountId == id);
 
             if (discount == null)
             {

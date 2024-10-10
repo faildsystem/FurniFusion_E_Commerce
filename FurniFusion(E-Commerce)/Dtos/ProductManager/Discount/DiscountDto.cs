@@ -1,4 +1,5 @@
 ﻿using FurniFusion.Dtos.ProductManager.DiscountUnit;
+using FurniFusion.Dtos.ProductManager.Product;
 
 namespace FurniFusion.Dtos.ProductManager.Discount
 {
@@ -29,5 +30,7 @@ namespace FurniFusion.Dtos.ProductManager.Discount
         public string? CreatedBy { get; set; }
 
         public string? UpdatedBy { get; set; }
+
+        public ICollection<ProductDto>? Products { get; set; }
     }
 }
