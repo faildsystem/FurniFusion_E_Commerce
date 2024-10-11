@@ -1,6 +1,5 @@
-﻿using FurniFusion.Dtos.ProductManager.Category;
-using FurniFusion.Dtos.ProductManager.Discount;
-using FurniFusion.Dtos.Review;
+﻿using FurniFusion.Dtos.Review;
+using FurniFusion.Dtos.SuperAdmin.InventoryProduct;
 
 namespace FurniFusion.Dtos.ProductManager.Product
 {
@@ -22,9 +21,9 @@ namespace FurniFusion.Dtos.ProductManager.Product
 
         public decimal Price { get; set; }
 
-        public int? StockQuantity { get; set; }
+        public int? StockQuantity { get; set; } = 0;
 
-        public bool? IsAvailable { get; set; }
+        public bool? IsAvailable { get; set; } = false;
 
         public decimal? AverageRating { get; set; }
 
@@ -40,11 +39,13 @@ namespace FurniFusion.Dtos.ProductManager.Product
 
         public int? DiscountId { get; set; }
 
-        //public DiscountDto? DiscountObj { get; set; }
+        //public DiscountDto Discount { get; set; } = new DiscountDto();
 
         public int? CategoryId { get; set; }
 
         //public CategoryDto? Category { get; set; }
+
+        public List<InventoryProductDto> InventoryProducts { get; set; } = new List<InventoryProductDto>();
 
     }
 }

@@ -1,7 +1,4 @@
 - apply repository pattern to seperate the service layer from the database layer
-- discount
 - filter products by dates
-- inventory controller
-- product stock quantity from inventory
 - order controller
 - schedule the update_average_rating function to run every 12 hours 

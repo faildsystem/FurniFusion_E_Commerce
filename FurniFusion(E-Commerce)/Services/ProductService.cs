@@ -18,10 +18,11 @@ namespace FurniFusion.Services
 
         public async Task<ServiceResult<List<Product>>> GetAllProductsAsync(ProductFilter filter)
         {
-            var products = _context.Products
-                //.Include(p => p.Discount)
+            var products= _context.Products
+                .Include(p => p.InventoryProducts)
                 .Include(p => p.ProductReviews)
                 .AsQueryable();
+
 
             if (filter.Id > 0)
             {
@@ -104,7 +105,8 @@ namespace FurniFusion.Services
                     p.Colors == productDto.Colors
                 );
 
-            if (product != null) {
+            if (product != null)
+            {
                 return ServiceResult<Product>.ErrorResult("Product with the same attributes already exists", StatusCodes.Status409Conflict);
             }
 
@@ -116,8 +118,6 @@ namespace FurniFusion.Services
                 ImageUrls = productImagesUrls,
                 Dimensions = productDto.Dimensions,
                 Price = productDto.Price,
-                StockQuantity = productDto.StockQuantity,
-                IsAvailable = productDto.IsAvailable,
                 Weight = productDto.Weight,
                 Colors = productDto.Colors,
                 Description = productDto.Description,
@@ -146,15 +146,13 @@ namespace FurniFusion.Services
             result.Data.ProductName = productDto.ProductName ?? result.Data.ProductName;
             result.Data.Dimensions = productDto.Dimensions ?? result.Data.Dimensions;
             result.Data.Price = productDto.Price ?? result.Data.Price;
-            result.Data.StockQuantity = productDto.StockQuantity ?? result.Data.StockQuantity;
-            result.Data.IsAvailable = productDto.IsAvailable ?? result.Data.IsAvailable;
             result.Data.Weight = productDto.Weight ?? result.Data.Weight;
             result.Data.Description = productDto.Description ?? result.Data.Description;
             result.Data.CategoryId = productDto.CategoryId ?? result.Data.CategoryId;
             result.Data.UpdatedBy = updatorId;
             result.Data.UpdatedAt = DateTime.Now;
 
-      
+
             if (productDto.Colors != null && productDto.Colors.Any())
             {
                 result.Data.Colors!.AddRange(productDto.Colors);
@@ -193,7 +191,7 @@ namespace FurniFusion.Services
         public async Task<ServiceResult<Product>> GetProductByIdAsync(int? id)
         {
             var product = await _context.Products
-                //.Include(p => p.Discount)
+                .Include(p => p.InventoryProducts)
                 .Include(p => p.ProductReviews)
                 .FirstOrDefaultAsync(p => p.ProductId == id);
 
@@ -228,10 +226,6 @@ namespace FurniFusion.Services
             }
 
             result.Data.DiscountId = discount.DiscountId;
-
-            result.Data.Discount = discount;
-
-            discount.Products.Add(result.Data);
 
             _context.Products.Update(result.Data);
             await _context.SaveChangesAsync();

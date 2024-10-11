@@ -131,6 +131,8 @@ namespace FurniFusion
             builder.Services.AddScoped<IProductService, ProductService>();
             builder.Services.AddScoped<IDiscountService, DiscountService>();
             builder.Services.AddScoped<IDiscountUnitService, DiscountUnitService>();
+            builder.Services.AddScoped<IInventoryService, InventoryService>();
+            builder.Services.AddScoped<IInventoryProductService, InventoryProductService>();
 
 
 

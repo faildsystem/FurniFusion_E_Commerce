@@ -1,41 +1,39 @@
-﻿using FurniFusion.Dtos.ProductManager.Category;
+﻿using FurniFusion.Dtos.SuperAdmin.Inventory;
 using FurniFusion.Interfaces;
 using FurniFusion.Mappers;
-using FurniFusion.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 
-namespace FurniFusion.Controllers
+namespace FurniFusion.Controllers.SuperAdmin
 {
     [Authorize(Roles = "superAdmin, productManager")]
     [ApiController]
     [Route(("api/[controller]"))]
-    public class CategoryController : ControllerBase
+    public class InventoryController : ControllerBase
     {
-        private readonly ICategoryService _categoryService;
+        private readonly IInventoryService _inventoryService;
 
-        public CategoryController(ICategoryService CategoryService)
+        public InventoryController(IInventoryService inventoryService)
         {
-            _categoryService = CategoryService;
+            _inventoryService = inventoryService;
         }
 
-        [HttpGet("getCategories")]
-        public async Task<IActionResult> GetCategories()
+        [HttpGet("getInventories")]
+        public async Task<IActionResult> GetAllInventoriesAsync()
         {
             try
             {
-                var result = await _categoryService.GetAllCategoriesAsync();
+                var result = await _inventoryService.GetAllInventoriesAsync();
 
                 if (!result.Success)
                     return StatusCode(result.StatusCode, new { message = result.Message });
 
 
-                var categories = result.Data.Select(c => c.ToCategoryDto()).ToList();
+                var inventories = result.Data.Select(c => c.ToInventoryDto()).ToList();
 
                 var totalItems = result.Data.Count();
 
-                return Ok(new { totalItems, categories });
+                return Ok(new { totalItems, inventories });
 
             }
             catch (Exception ex)
@@ -44,8 +42,8 @@ namespace FurniFusion.Controllers
             }
         }
 
-        [HttpGet("getCategory/{id}")]
-        public async Task<IActionResult> GetCategory(int id)
+        [HttpGet("getInventory/{id}")]
+        public async Task<IActionResult> GetInventoryByIdAsync(int id)
         {
             if (!ModelState.IsValid)
             {
@@ -54,14 +52,16 @@ namespace FurniFusion.Controllers
 
             try
             {
-                var result = await _categoryService.GetCategoryByIdAsync(id);
+                var result = await _inventoryService.GetInventoryByIdAsync(id);
 
                 if (!result.Success)
                 {
                     return StatusCode(result.StatusCode, new { message = result.Message });
                 }
 
-                return Ok(result.Data.ToCategoryDto());
+                var inventory = result.Data.ToInventoryDto();
+
+                return Ok(inventory);
 
             }
             catch (Exception ex)
@@ -70,61 +70,24 @@ namespace FurniFusion.Controllers
             }
         }
 
-        [HttpPost("createCategory")]
-        public async Task<IActionResult> CreateCategory([FromBody] CreateCategoryDto categoryDto)
+        [HttpPost("createInventory")]
+        public async Task<IActionResult> CreateInventory([FromBody] CreateInventoryDto inventoryDto)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            var creatorId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
-            if (string.IsNullOrEmpty(creatorId))
-                return Unauthorized(new { message = "User not found" });
-
-
             try
             {
-                var result = await _categoryService.CreateCategoryAsync(categoryDto, creatorId!);
-
-                if (!result.Success)
-                    {
-                    return StatusCode(result.StatusCode, new { message = result.Message });
-                }
-
-                return CreatedAtAction(nameof(CreateCategory), new { id = result.Data!.CategoryId }, result.Data.ToCategoryDto());
-
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = ex.Message });
-            }
-        }
-
-        [HttpPut("updateCategory")]
-        public async Task<IActionResult> UpdateCategory([FromBody] UpdateCategoryDto categoryDto)
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            var updatorId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
-            if (string.IsNullOrEmpty(updatorId))
-                return Unauthorized(new { message = "User not found" });
-
-            try
-            {
-                var result = await _categoryService.UpdateCategoryAsync(categoryDto, updatorId!);
+                var result = await _inventoryService.CreateInventoryAsync(inventoryDto);
 
                 if (!result.Success)
                 {
                     return StatusCode(result.StatusCode, new { message = result.Message });
                 }
 
-                return Ok(result.Data.ToCategoryDto());
+                return CreatedAtAction(nameof(GetInventoryByIdAsync), new { id = result.Data.InventoryId }, result.Data.ToInventoryDto());
 
             }
             catch (Exception ex)
@@ -133,8 +96,8 @@ namespace FurniFusion.Controllers
             }
         }
 
-        [HttpDelete("deleteCategory/{id}")]
-        public async Task<IActionResult> DeleteCategory(int id)
+        [HttpPut("updateInventory")]
+        public async Task<IActionResult> UpdateInventory([FromBody] UpdateInventoryDto inventoryDto)
         {
             if (!ModelState.IsValid)
             {
@@ -143,20 +106,47 @@ namespace FurniFusion.Controllers
 
             try
             {
-                var result = await _categoryService.DeleteCategoryAsync(id);
+                var result = await _inventoryService.UpdateInventoryAsync(inventoryDto);
 
                 if (!result.Success)
                 {
                     return StatusCode(result.StatusCode, new { message = result.Message });
                 }
 
-                return Ok(new { message = "Category deleted successfully" });
-                
+                return Ok(result.Data.ToInventoryDto());
+
             }
             catch (Exception ex)
             {
                 return StatusCode(500, new { message = ex.Message });
             }
         }
+
+        [HttpDelete("deleteInventory/{id}")]
+        public async Task<IActionResult> DeleteInventory(int id)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            try
+            {
+                var result = await _inventoryService.DeleteInventoryAsync(id);
+
+                if (!result.Success)
+                {
+                    return StatusCode(result.StatusCode, new { message = result.Message });
+                }
+
+                return Ok(new { message = result.Message });
+
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = ex.Message });
+            }
+        }
+
     }
 }

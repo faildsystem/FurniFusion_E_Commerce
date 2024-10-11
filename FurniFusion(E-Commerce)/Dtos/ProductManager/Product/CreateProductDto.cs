@@ -29,12 +29,6 @@ namespace FurniFusion.Dtos.ProductManager.Product
         public decimal Price { get; set; }
 
         [Required]
-        public int? StockQuantity { get; set; }
-
-        [Required]
-        public bool? IsAvailable { get; set; }
-
-        [Required]
         public int? CategoryId { get; set; }
     }
 }
