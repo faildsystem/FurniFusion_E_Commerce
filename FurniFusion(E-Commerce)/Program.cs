@@ -128,6 +128,8 @@ namespace FurniFusion
 
             builder.Services.AddScoped<ITokenService, TokenService>();
             builder.Services.AddScoped<ICategoryService, CategoryService>();
+            builder.Services.AddScoped<IPaymentService, PaymentService>();
+            builder.Services.AddScoped<IOrderService, OrderService>();
             builder.Services.AddScoped<IProductService, ProductService>();
             builder.Services.AddScoped<IDiscountService, DiscountService>();
             builder.Services.AddScoped<IDiscountUnitService, DiscountUnitService>();
