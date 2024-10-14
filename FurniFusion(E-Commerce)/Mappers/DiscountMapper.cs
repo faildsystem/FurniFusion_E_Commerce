@@ -22,7 +22,7 @@ namespace FurniFusion.Mappers
                 UpdatedBy = discount.UpdatedBy,
                 CreatedAt = discount.CreatedAt,
                 UpdatedAt = discount.UpdatedAt,
-                Products = discount.Products.Select(p => p.ToProductDto()).ToList()
+                //Products = discount.Products.Select(p => p.ToProductDto()).ToList()
             };
         }
     }

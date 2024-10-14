@@ -63,19 +63,19 @@ namespace FurniFusion.Controllers
                 return BadRequest(ModelState);
             }
 
-            try
-            {
+            //try
+            //{
                 var result = await _productService.GetProductByIdAsync(id);
 
                 if (!result.Success)
                     return StatusCode(result.StatusCode, new { message = result.Message });
 
                 return Ok(result.Data.ToProductDto());
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = ex.Message });
-            }
+            //}
+            //catch (Exception ex)
+            //{
+            //    return StatusCode(500, new { message = ex.Message });
+            //}
         }
 
         [HttpPost("createProduct")]

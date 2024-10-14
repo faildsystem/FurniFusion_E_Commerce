@@ -32,5 +32,6 @@ namespace FurniFusion.Dtos.ProductManager.Discount
         public string? UpdatedBy { get; set; }
 
         public ICollection<ProductDto>? Products { get; set; }
+
     }
 }
