@@ -7,6 +7,6 @@ namespace FurniFusion.Interfaces
 
         Task<int?> DoPaymentAsync(Payment payment);
 
-        Task<Payment> GetPaymentByIdAsync(int paymentId);
+        Task<Payment?> GetPaymentByIdAsync(int paymentId);
     }
 }

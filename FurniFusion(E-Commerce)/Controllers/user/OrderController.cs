@@ -1,5 +1,6 @@
 ﻿using FurniFusion.Dtos.Order;
 using FurniFusion.Interfaces;
+using FurniFusion.Mappers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -75,19 +76,19 @@ namespace FurniFusion.Controllers.user
             if (string.IsNullOrEmpty(userId))
                 return Unauthorized(new { message = "User not found" });
 
-            try
-            {
+            //try
+            //{
                 var result = await _orderService.GetOrderByIdAsync(orderId, userId);
 
                 if (!result.Success)
                     return StatusCode(result.StatusCode, new { message = result.Message });
 
-                return Ok(result.Data);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = ex.Message });
-            }
+                return Ok(result.Data!.ToOrderDto());
+            //}
+            //catch (Exception ex)
+            //{
+            //    return StatusCode(500, new { message = ex.Message });
+            //}
         }
 
         // Get orders by user
@@ -106,7 +107,7 @@ namespace FurniFusion.Controllers.user
                 if (!result.Success)
                     return StatusCode(result.StatusCode, new { message = result.Message });
 
-                return Ok(result.Data);
+                return Ok(result.Data.Select(x => x.ToOrderDto()));
             }
             catch (Exception ex)
             {
@@ -115,26 +116,26 @@ namespace FurniFusion.Controllers.user
         }
 
         // Change order status (for admin or system use)
-        [HttpPut]
-        [Authorize(Roles = "superAdmin, productManager")]
-        public async Task<IActionResult> ChangeOrdersStatus([FromBody] ChangeOrdersStatusDto changeOrdersStatusDto)
-        {
-            if(!ModelState.IsValid)
-                return BadRequest(ModelState);
+        //[HttpPut]
+        //[Authorize(Roles = "superAdmin, productManager")]
+        //public async Task<IActionResult> ChangeOrdersStatus([FromBody] ChangeOrdersStatusDto changeOrdersStatusDto)
+        //{
+        //    if(!ModelState.IsValid)
+        //        return BadRequest(ModelState);
 
-            try
-            {
-                var result = await _orderService.ChangeOrderStatusAsync(changeOrdersStatusDto.orderStatusData);
+        //    try
+        //    {
+        //        var result = await _orderService.ChangeOrderStatusAsync(changeOrdersStatusDto.orderStatusData);
 
-                if (!result.Success)
-                    return StatusCode(result.StatusCode, new { message = result.Message });
+        //        if (!result.Success)
+        //            return StatusCode(result.StatusCode, new { message = result.Message });
 
-                return Ok(new { message = result.Message, result.Data });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = ex.Message });
-            }
-        }
+        //        return Ok(new { message = result.Message, result.Data });
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return StatusCode(500, new { message = ex.Message });
+        //    }
+        //}
     }
 }

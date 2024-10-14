@@ -49,7 +49,6 @@ namespace FurniFusion.Services
             return ServiceResult<ShoppingCartDTO?>.SuccessResult(cartItems, message: "Cart retrieved successfully", statusCode: StatusCodes.Status200OK);
         }
 
-
         public async Task<ServiceResult<ShoppingCartItem?>> AddCartItemAsync(ShoppingCartItem shoppingCartItem, string userId)
         {
 
