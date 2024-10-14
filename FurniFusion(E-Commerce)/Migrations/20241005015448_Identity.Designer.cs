@@ -552,7 +552,7 @@ namespace FurniFusion.Migrations
                     b.ToTable("Order_Item", (string)null);
                 });
 
-            modelBuilder.Entity("FurniFusion.Models.OrderStatus", b =>
+            modelBuilder.Entity("FurniFusion.Models.OrderStatusEnum", b =>
                 {
                     b.Property<int>("StatusId")
                         .ValueGeneratedOnAdd()
@@ -670,7 +670,7 @@ namespace FurniFusion.Migrations
                     b.ToTable("Payment_Method", (string)null);
                 });
 
-            modelBuilder.Entity("FurniFusion.Models.PaymentStatus", b =>
+            modelBuilder.Entity("FurniFusion.Models.PaymentStatusEnum", b =>
                 {
                     b.Property<int>("StatusId")
                         .ValueGeneratedOnAdd()
@@ -1025,7 +1025,7 @@ namespace FurniFusion.Migrations
                     b.ToTable("Shipping", (string)null);
                 });
 
-            modelBuilder.Entity("FurniFusion.Models.ShippingStatus", b =>
+            modelBuilder.Entity("FurniFusion.Models.ShippingStatusEnum", b =>
                 {
                     b.Property<int>("StatusId")
                         .ValueGeneratedOnAdd()
@@ -1676,7 +1676,7 @@ namespace FurniFusion.Migrations
                         .OnDelete(DeleteBehavior.SetNull)
                         .HasConstraintName("Order_shipping_id_fkey");
 
-                    b.HasOne("FurniFusion.Models.OrderStatus", "StatusNavigation")
+                    b.HasOne("FurniFusion.Models.OrderStatusEnum", "StatusNavigation")
                         .WithMany("Orders")
                         .HasForeignKey("Status")
                         .HasConstraintName("Order_status_fkey");
@@ -1724,7 +1724,7 @@ namespace FurniFusion.Migrations
                         .HasForeignKey("PaymentMethod")
                         .HasConstraintName("Payment_payment_method_fkey");
 
-                    b.HasOne("FurniFusion.Models.PaymentStatus", "PaymentStatus")
+                    b.HasOne("FurniFusion.Models.PaymentStatusEnum", "PaymentStatusEnum")
                         .WithMany("Payments")
                         .HasForeignKey("PaymentStatusId")
                         .HasConstraintName("Payment_payment_status_id_fkey");
@@ -1737,7 +1737,7 @@ namespace FurniFusion.Migrations
 
                     b.Navigation("PaymentMethodNavigation");
 
-                    b.Navigation("PaymentStatus");
+                    b.Navigation("PaymentStatusEnum");
 
                     b.Navigation("User");
                 });
@@ -1821,14 +1821,14 @@ namespace FurniFusion.Migrations
                         .OnDelete(DeleteBehavior.SetNull)
                         .HasConstraintName("Shipping_carrier_id_fkey");
 
-                    b.HasOne("FurniFusion.Models.ShippingStatus", "ShippingStatus")
+                    b.HasOne("FurniFusion.Models.ShippingStatusEnum", "ShippingStatusEnum")
                         .WithMany("Shippings")
                         .HasForeignKey("ShippingStatusId")
                         .HasConstraintName("Shipping_shipping_status_id_fkey");
 
                     b.Navigation("Carrier");
 
-                    b.Navigation("ShippingStatus");
+                    b.Navigation("ShippingStatusEnum");
                 });
 
             modelBuilder.Entity("FurniFusion.Models.ShoppingCart", b =>
@@ -2019,7 +2019,7 @@ namespace FurniFusion.Migrations
                     b.Navigation("OrderItems");
                 });
 
-            modelBuilder.Entity("FurniFusion.Models.OrderStatus", b =>
+            modelBuilder.Entity("FurniFusion.Models.OrderStatusEnum", b =>
                 {
                     b.Navigation("Orders");
                 });
@@ -2034,7 +2034,7 @@ namespace FurniFusion.Migrations
                     b.Navigation("Payments");
                 });
 
-            modelBuilder.Entity("FurniFusion.Models.PaymentStatus", b =>
+            modelBuilder.Entity("FurniFusion.Models.PaymentStatusEnum", b =>
                 {
                     b.Navigation("Payments");
                 });
@@ -2059,7 +2059,7 @@ namespace FurniFusion.Migrations
                     b.Navigation("Orders");
                 });
 
-            modelBuilder.Entity("FurniFusion.Models.ShippingStatus", b =>
+            modelBuilder.Entity("FurniFusion.Models.ShippingStatusEnum", b =>
                 {
                     b.Navigation("Shippings");
                 });

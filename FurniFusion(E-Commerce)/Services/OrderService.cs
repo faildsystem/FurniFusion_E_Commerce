@@ -20,31 +20,55 @@ namespace FurniFusion.Services
             _paymentService = paymentService;
         }
 
+        public decimal CalculateOrderItemTotalPrice(
+    string discountUnit, decimal? discountValue, int? quantity, decimal unitPrice,
+    DateOnly? validFrom, DateOnly? validTo, bool? isActive, decimal? maxAmount)
+        {
+            DateOnly today = DateOnly.FromDateTime(DateTime.Now);
+
+            if (!isActive.HasValue || !isActive.Value)
+                return unitPrice * (quantity ?? 0);
+
+            if (!validFrom.HasValue || !validTo.HasValue)
+                return unitPrice * (quantity ?? 0);
+
+            if (validFrom > today || validTo < today)
+            {
+                return unitPrice * (quantity ?? 0);
+            }
+
+            decimal totalPrice = unitPrice * (quantity ?? 0);
+            decimal totalDiscount = 0;
+
+            if (discountUnit.Equals("PERCENT", StringComparison.OrdinalIgnoreCase) && discountValue.HasValue)
+            {
+                totalDiscount = totalPrice * (discountValue.Value / 100);
+            }
+            else if (discountUnit.Equals("AMOUNT", StringComparison.OrdinalIgnoreCase) && discountValue.HasValue)
+            {
+                totalDiscount = (quantity ?? 0) * discountValue.Value;
+            }
+            else
+            {
+                // Optionally log unexpected discountUnit
+                throw new ArgumentException($"Unexpected discount unit: {discountUnit}");
+            }
+
+            if (maxAmount.HasValue && totalDiscount > maxAmount.Value)
+            {
+                totalDiscount = maxAmount.Value;
+            }
+
+            decimal finalPrice = totalPrice - totalDiscount;
+            return finalPrice >= 0 ? finalPrice : 0;
+        }
+
         public async Task<ServiceResult<bool>> CancelOrderAsync(int orderId, string userId)
         {
             var order = await _context.Orders
-                .Where(o => o.OrderId == orderId)
-                .FirstOrDefaultAsync();
-
-            //var order = from o in _context.Orders
-            //            join p in _context.Payments
-            //            on o.PaymentId equals p.PaymentId
-            //            join d in _context.Discounts
-            //            on o.DiscountId equals d.DiscountId
-            //            join i in _context.OrderItems
-            //            on o.OrderId equals i.OrderId
-            //            where o.OrderId == orderId
-            //            select new
-            //            {
-            //               o.OrderId,
-            //               o.UserId,
-            //               o.Status,
-            //               o.UpdatedAt,
-            //               o.TotalPrice,
-
-
-
-            //            };
+                .Include(o => o.Payment)
+                .Include(o => o.OrderItems)
+                .FirstOrDefaultAsync(o => o.OrderId == orderId);
 
             if (order == null)
                 return ServiceResult<bool>.ErrorResult("Order not found", StatusCodes.Status404NotFound);
@@ -58,59 +82,109 @@ namespace FurniFusion.Services
             if (order.Status != 1)
                 return ServiceResult<bool>.ErrorResult("Order cannot be canceled", StatusCodes.Status400BadRequest);
 
-
-            var payment = await _paymentService.GetPaymentByIdAsync((int)order.PaymentId!);
-
-            if (payment == null)
+            if (order.Payment == null)
                 return ServiceResult<bool>.ErrorResult("Payment not found", StatusCodes.Status404NotFound);
 
-            order.Status = 4;
-            order.UpdatedAt = DateTime.UtcNow;
-            payment.PaymentStatusId = 4;
+            using (var transaction = await _context.Database.BeginTransactionAsync())
+            {
+                try
+                {
+                    order.Status = 4;
+                    order.UpdatedAt = DateTime.Now;
+                    order.Payment.PaymentStatusId = 3;
 
-            await _context.SaveChangesAsync();
+                    foreach (var item in order.OrderItems)
+                    {
+                        var product = await _context.Products
+                            .FirstOrDefaultAsync(p => p.ProductId == item.ProductId);
 
+                        if (product == null)
+                            continue;
+
+                        product.StockQuantity += item.Quantity;
+
+                        if (product.IsAvailable.HasValue && !product.IsAvailable.Value && product.StockQuantity > 0)
+                            product.IsAvailable = true;
+                    }
+
+                    await _context.SaveChangesAsync();
+                    await transaction.CommitAsync();
+                }
+                catch (Exception ex)
+                {
+                    await transaction.RollbackAsync();
+                    // Optionally log the exception
+                    // Logger.Error(ex, "Error canceling order.");
+                    return ServiceResult<bool>.ErrorResult(ex.Message, StatusCodes.Status500InternalServerError);
+                }
+            }
 
             return ServiceResult<bool>.SuccessResult(true, "Order canceled successfully", StatusCodes.Status200OK);
-
         }
 
         public async Task<ServiceResult<UpdateOrdersStatusDto?>> ChangeOrderStatusAsync(Dictionary<int, int> data)
         {
             var updateOrdersStatusDto = new UpdateOrdersStatusDto();
 
-            // Fetch orders that match the provided OrderIds in a single query
+            var orderIds = data.Keys.ToList();
             var orders = await _context.Orders
-                                       .Where(o => data.Keys.Contains(o.OrderId))
+                                       .Where(o => orderIds.Contains(o.OrderId))
                                        .ToListAsync();
 
-            if (!orders.Any())
+            var existingOrderIds = orders.Select(o => o.OrderId).ToHashSet();
+            var failedOrders = new HashSet<int>();
+
+            foreach (var orderId in orderIds)
             {
-                return ServiceResult<UpdateOrdersStatusDto?>.ErrorResult("Orders not found", StatusCodes.Status404NotFound);
+                if (!existingOrderIds.Contains(orderId))
+                {
+                    failedOrders.Add(orderId);
+                    continue;
+                }
+
+                var order = orders.First(o => o.OrderId == orderId);
+                var newStatus = data[orderId];
+
+                if (!IsValidStatusTransition((int)order.Status!, newStatus))
+                {
+                    failedOrders.Add(orderId);
+                    continue;
+                }
+
+                order.Status = newStatus;
+                order.UpdatedAt = DateTime.Now;
+                updateOrdersStatusDto.UpdatedOrders.Add(orderId);
             }
 
-            // Track failed updates separately from the start
-            var failedOrders = new HashSet<int>(data.Keys.Except(orders.Select(o => o.OrderId)));
-
-            foreach (var order in orders)
+            if (updateOrdersStatusDto.UpdatedOrders.Any())
             {
-                if (data.TryGetValue(order.OrderId, out var newStatus))
+                try
                 {
-                    order.Status = newStatus; // Update the status
-                    updateOrdersStatusDto.UpdatedOrders.Add(order.OrderId); // Track updated orders
+                    await _context.SaveChangesAsync();
+                }
+                catch (DbUpdateConcurrencyException ex)
+                {
+                    // Optionally log the exception
+                    // Logger.Error(ex, "Concurrency error while changing order statuses.");
+                    return ServiceResult<UpdateOrdersStatusDto?>.ErrorResult("A concurrency error occurred.", StatusCodes.Status500InternalServerError);
                 }
             }
 
-            // Combine failed orders (those that didn't match any OrderId in the database)
             updateOrdersStatusDto.FailedOrders.AddRange(failedOrders);
 
-            // Save changes only if there are updated orders
             if (updateOrdersStatusDto.UpdatedOrders.Any())
             {
-                await _context.SaveChangesAsync();
+                return ServiceResult<UpdateOrdersStatusDto?>.SuccessResult(
+                    updateOrdersStatusDto,
+                    "Orders updated successfully",
+                    StatusCodes.Status200OK);
             }
-
-            return ServiceResult<UpdateOrdersStatusDto?>.SuccessResult(updateOrdersStatusDto, "Orders updated successfully", StatusCodes.Status200OK);
+            else
+            {
+                return ServiceResult<UpdateOrdersStatusDto?>.ErrorResult(
+                    "No orders were updated. Check failed orders for details.",
+                    StatusCodes.Status400BadRequest);
+            }
         }
 
         public async Task<ServiceResult<bool>> CreateOrderAsync(CreateOrderDto createOrderDto, string userId)
@@ -127,56 +201,62 @@ namespace FurniFusion.Services
 
             var productsIds = cartItems.Select(c => c.ProductId).ToList();
 
-            var cartProducts = from product in _context.Products
-                               join discount in _context.Discounts
-                               on product.DiscountId equals discount.DiscountId into discountGroup
-                               from discount in discountGroup.DefaultIfEmpty() // Left Join
-                               join discountUnit in _context.DiscountUnits
-                               on discount.DiscountUnitId equals discountUnit.UnitId into discountUnitGroup
-                               from discountUnit in discountUnitGroup.DefaultIfEmpty() // Left Join
-                               where productsIds.Contains(product.ProductId)
-                               select new
-                               {
-                                   product.ProductId,
-                                   product.ProductName,
-                                   DiscountValue = discount != null ? discount.DiscountValue : 0, // Handle null in case of no match
-                                   UnitName = discountUnit != null ? discountUnit.UnitName : null, // Handle null in case of no match
-                                   product.Price,
-                                   product.StockQuantity
-                               };
+            var cartProducts = await _context.Products
+                                        .Include(p => p.Discount)
+                                        .ThenInclude(d => d!.DiscountUnit)
+                                        .Where(p => productsIds.Contains(p.ProductId))
+                                         .ToListAsync();
+
+
+            var missingProductIds = productsIds.Except(cartProducts.Select(p => p.ProductId)).ToList();
+
+            if (missingProductIds.Any())
+                return ServiceResult<bool>.ErrorResult("Some products in the cart are no longer available.", StatusCodes.Status400BadRequest);
 
             var orderItems = new List<OrderItem>();
+            decimal totalPrice = 0;
 
-            foreach (var product in cartProducts)
+            foreach (var cartItem in cartItems)
             {
-                var requiredQuantity = cartItems.FirstOrDefault(c => c.ProductId == product.ProductId)!.Quantity;
+                var product = cartProducts.First(p => p.ProductId == cartItem.ProductId);
 
-                if (requiredQuantity == null || requiredQuantity < 1)
-                    return ServiceResult<bool>.ErrorResult($" {product.ProductName} has Invalid quantity", StatusCodes.Status400BadRequest);
+                if ((bool)!product.IsAvailable!)
+                    return ServiceResult<bool>.ErrorResult($"Product {product.ProductName} is not available", StatusCodes.Status400BadRequest);
 
-                if (product.StockQuantity < requiredQuantity)
-                    return ServiceResult<bool>.ErrorResult($" {product.ProductName} Not enough stock", StatusCodes.Status400BadRequest);
+                if (cartItem.Quantity < 1)
+                    return ServiceResult<bool>.ErrorResult($"Invalid quantity for product {product.ProductName}", StatusCodes.Status400BadRequest);
 
-                decimal priceAfterDiscount = 0;
+                if (product.StockQuantity < cartItem.Quantity)
+                    return ServiceResult<bool>.ErrorResult($"Not enough stock for product {product.ProductName}", StatusCodes.Status400BadRequest);
 
-                if (product.UnitName == "PERCENT")
-                    priceAfterDiscount = (decimal)(product.Price * (1 - product.DiscountValue / 100));
-                else
-                    priceAfterDiscount = (decimal)(product.Price - product.DiscountValue);
 
-                await _context.Products.Where(p => p.ProductId == product.ProductId).ExecuteUpdateAsync(p => p.SetProperty(p => p.StockQuantity, p => p.StockQuantity - requiredQuantity));
+                decimal discountedPrice = CalculateOrderItemTotalPrice(
+                        product.Discount?.DiscountUnit?.UnitName ?? string.Empty, // Safely handle null Discount and DiscountUnit
+                        product.Discount?.DiscountValue ?? 0, // Default to 0 if DiscountValue is null
+                        cartItem.Quantity,
+                        product.Price,
+                        product.Discount?.ValidFrom, // Pass null if ValidFrom is null
+                        product.Discount?.ValidTo,   // Pass null if ValidTo is null
+                        product.Discount?.IsActive ?? false, // Default to false if IsActive is null
+                        product.Discount?.MaxAmount // Pass null if MaxAmount is null
+                    );
 
+
+                totalPrice += discountedPrice;
 
                 orderItems.Add(new OrderItem
                 {
                     ProductId = product.ProductId,
-                    Quantity = (int)requiredQuantity,
-                    Price = priceAfterDiscount,
+                    Quantity = (int)cartItem.Quantity!,
+                    Price = discountedPrice, // Assuming this is total price for the item
                     CreatedAt = DateTime.Now,
                 });
-            }
 
-            var totalPrice = orderItems.Sum(i => i.Price * i.Quantity);
+                // Update product stock in-memory
+                product.StockQuantity -= cartItem.Quantity;
+                if (product.StockQuantity == 0)
+                    product.IsAvailable = false;
+            }
 
             var payment = new Payment
             {
@@ -188,35 +268,47 @@ namespace FurniFusion.Services
                 TransactionId = Guid.NewGuid().ToString(),
             };
 
-            using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
+            using (var transaction = await _context.Database.BeginTransactionAsync())
             {
-                var paymentId = await _paymentService.DoPaymentAsync(payment);
-
-                if (paymentId == null)
-                    return ServiceResult<bool>.ErrorResult("Payment failed", StatusCodes.Status500InternalServerError);
-
-                var order = new Order
+                try
                 {
-                    UserId = userId,
-                    OrderItems = orderItems,
-                    AddressToDeliver = createOrderDto.AddressToDeliver,
-                    PaymentId = paymentId,
-                    TotalPrice = totalPrice,
-                    Status = 1,
-                    ShippingId = 1,
-                    DiscountId = 1,
-                    CreatedAt = DateTime.Now,
-                    UpdatedAt = DateTime.Now
-                };
 
-                var createdOrder = await _context.Orders.AddAsync(order);
+                    var paymentId = await _paymentService.DoPaymentAsync(payment);
 
-                await _context.ShoppingCartItems.Where(c => c.CartId == cart.CartId).ExecuteDeleteAsync();
+                    if (paymentId == null)
+                        return ServiceResult<bool>.ErrorResult("Payment failed", StatusCodes.Status500InternalServerError);
 
-                await _context.SaveChangesAsync();
+                    var order = new Order
+                    {
+                        UserId = userId,
+                        OrderItems = orderItems,
+                        AddressToDeliver = createOrderDto.AddressToDeliver,
+                        PaymentId = paymentId,
+                        TotalPrice = totalPrice,
+                        Status = 1,
+                        ShippingId = 1,
+                        DiscountId = 1,
+                        CreatedAt = DateTime.Now,
+                        UpdatedAt = DateTime.Now
+                    };
 
-                scope.Complete();
+                    var createdOrder = await _context.Orders.AddAsync(order);
+
+                    await _context.ShoppingCartItems.Where(c => c.CartId == cart.CartId).ExecuteDeleteAsync();
+
+                    await _context.SaveChangesAsync();
+
+                    await transaction.CommitAsync();
+                }
+                catch (Exception ex)
+                {
+                    await transaction.RollbackAsync();
+
+                    return ServiceResult<bool>.ErrorResult(ex.Message, StatusCodes.Status500InternalServerError);
+                }
+
             }
+
 
 
             return ServiceResult<bool>.SuccessResult(true, "Order created successfully", StatusCodes.Status200OK);
@@ -224,7 +316,19 @@ namespace FurniFusion.Services
 
         public async Task<ServiceResult<Order?>> GetOrderByIdAsync(int orderId, string userId)
         {
-            var order = await _context.Orders.FirstOrDefaultAsync(c => c.OrderId == orderId);
+            var order = await _context.Orders
+                                            .Where(o => o.OrderId == orderId)
+                                            .Include(o => o.OrderItems)
+                                                .ThenInclude(oi => oi.Product)
+                                                .Include(s => s.StatusNavigation)
+                                            .Include(o => o.Payment)
+                                                .ThenInclude(p => p.PaymentStatus)
+                                            .Include(o => o.Payment)
+                                                .ThenInclude(p => p.PaymentMethodNavigation)
+                                            .Include(o => o.Shipping)
+                                                .ThenInclude(s => s.ShippingStatus)
+                                            .AsNoTracking()
+                                            .FirstOrDefaultAsync();
 
             if (order == null)
                 return ServiceResult<Order?>.ErrorResult("Order not found", StatusCodes.Status404NotFound);
@@ -243,6 +347,14 @@ namespace FurniFusion.Services
                 return ServiceResult<List<Order>?>.ErrorResult("Orders not found", StatusCodes.Status404NotFound);
 
             return ServiceResult<List<Order>?>.SuccessResult(orders, "Orders retrieved successfully", StatusCodes.Status200OK);
+        }
+
+
+        private bool IsValidStatusTransition(int currentStatus, int newStatus)
+        {
+            var validTransitions = new HashSet<int> { 1, 2, 3, 4, 5 };
+
+            return validTransitions.Contains(currentStatus) && validTransitions.Contains(newStatus);
         }
 
     }

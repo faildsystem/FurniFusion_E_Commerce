@@ -1,4 +1,16 @@
 - apply repository pattern to seperate the service layer from the database layer
 - filter products by dates
-- order controller
 - schedule the update_average_rating function to run every 12 hours 
+- check for carrier in change order status function 
+- add shipping charge to the total cost of the order 
+- handel when user payment 
+- store the image of the product and the user profile image in google drive 
+- carrier 
+- payment 
+- user add and verify payment info
+- shipping
+- apply discount on order
+- filter user order 
+- repalce hangfire with built-in background job or by Quartz
+- review and optimize ef core and its migrations
+

@@ -266,5 +266,7 @@ namespace FurniFusion.Services
 
             return ServiceResult<bool>.SuccessResult(true, "Discount activated successfully");
         }
+
+       
     }
 }
