@@ -25,7 +25,7 @@ namespace FurniFusion.Mappers
                 CreatedBy = product.CreatedBy,
                 UpdatedBy = product.UpdatedBy,
                 DiscountId = product.DiscountId,
-                //Discount = product.Discount.ToDiscountDto(),
+                Discount = product.Discount?.ToDiscountDto(),
                 CategoryId = product.CategoryId,
                 //Category = product.Category.ToCategoryDto(),
                 AverageRating = product.AverageRating,

@@ -19,6 +19,8 @@ namespace FurniFusion.Services
         public async Task<ServiceResult<List<Product>>> GetAllProductsAsync(ProductFilter filter)
         {
             var products= _context.Products
+                .Include(p => p.Discount)
+                .ThenInclude(d => d.DiscountUnit)
                 .Include(p => p.InventoryProducts)
                 .Include(p => p.ProductReviews)
                 .AsQueryable();
@@ -191,6 +193,8 @@ namespace FurniFusion.Services
         public async Task<ServiceResult<Product>> GetProductByIdAsync(int? id)
         {
             var product = await _context.Products
+                .Include(p => p.Discount)
+                .ThenInclude(d => d.DiscountUnit)
                 .Include(p => p.InventoryProducts)
                 .Include(p => p.ProductReviews)
                 .FirstOrDefaultAsync(p => p.ProductId == id);
