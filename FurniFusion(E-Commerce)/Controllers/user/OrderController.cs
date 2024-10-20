@@ -1,6 +1,7 @@
 ﻿using FurniFusion.Dtos.Order;
 using FurniFusion.Interfaces;
 using FurniFusion.Mappers;
+using FurniFusion.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -137,5 +138,29 @@ namespace FurniFusion.Controllers.user
         //        return StatusCode(500, new { message = ex.Message });
         //    }
         //}
+
+        [HttpPost("{orderId}/applyDiscount/{discountId}")]
+        public async Task<IActionResult> ApplyDiscountToOrder(int orderId, int discountId)
+        {
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            try
+            {
+                var result = await _orderService.ApplyDiscountToOrderAsync(orderId, discountId);
+
+                if (!result.Success)
+                    return StatusCode(result.StatusCode, new { message = result.Message });
+
+                return Ok(new { message = "Discount applied successfully" });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = ex.Message });
+            }
+        }
     }
 }

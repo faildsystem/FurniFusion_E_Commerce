@@ -7,7 +7,7 @@ using FurniFusion.Interfaces;
 using FurniFusion.Dtos.SuperAdmin.Role;
 using FurniFusion.Mappers;
 
-namespace FurniFusion.Controllers
+namespace FurniFusion.Controllers.SuperAdmin
 {
     [Authorize(Roles = "superAdmin")]
     [ApiController]

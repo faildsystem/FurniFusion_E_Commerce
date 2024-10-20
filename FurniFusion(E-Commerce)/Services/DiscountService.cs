@@ -16,7 +16,7 @@ namespace FurniFusion.Services
             _context = context;
         }
 
-        // Discount
+
         public async Task<ServiceResult<List<Discount>>> GetAllDiscountsAsync(DiscountFilter filter)
         {
             var discounts = _context.Discounts

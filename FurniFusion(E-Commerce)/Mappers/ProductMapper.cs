@@ -30,7 +30,7 @@ namespace FurniFusion.Mappers
                 //Category = product.Category.ToCategoryDto(),
                 AverageRating = product.AverageRating,
                 Reviews = product.ProductReviews.Select(r => r.ToReviewDto()).ToList(),
-                InventoryProducts = product.InventoryProducts.Select(ip => ip.ToInventoryProductDto()).ToList()
+                //InventoryProducts = product.InventoryProducts.Select(ip => ip.ToInventoryProductDto()).ToList()
             };
         }
     }

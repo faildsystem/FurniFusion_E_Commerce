@@ -5,7 +5,6 @@ namespace FurniFusion.Mappers
 {
     public static class CartItemMapper
     {
-
         public static CartItemDto ToCartItemDto(this ShoppingCartItem cartItem)
         {
             return new CartItemDto

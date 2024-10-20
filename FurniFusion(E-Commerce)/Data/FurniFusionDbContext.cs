@@ -79,7 +79,7 @@ public partial class FurniFusionDbContext : IdentityDbContext<User>
         base.OnModelCreating(modelBuilder);
 
 
-        //List<IdentityRole> roles = new List<IdentityRole>
+        // List<IdentityRole> roles = new List<IdentityRole>
         //    {
         //        new IdentityRole
         //        {
@@ -93,7 +93,7 @@ public partial class FurniFusionDbContext : IdentityDbContext<User>
         //        }
         //    };
 
-        //modelBuilder.Entity<IdentityRole>().HasData(roles);
+        // modelBuilder.Entity<IdentityRole>().HasData(roles);
 
 
         modelBuilder.Entity<Carrier>(entity =>

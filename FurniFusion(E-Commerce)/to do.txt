@@ -5,7 +5,6 @@
 - add shipping charge to the total cost of the order 
 - handel when user payment 
 - store the image of the product and the user profile image in google drive 
-- carrier 
 - payment 
 - user add and verify payment info
 - shipping

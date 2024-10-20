@@ -20,6 +20,36 @@ namespace FurniFusion.Services
             _paymentService = paymentService;
         }
 
+        public async Task<ServiceResult<Order>> ApplyDiscountToOrderAsync(int orderId, int discountId)
+        {
+            var order = await _context.Orders
+                .FirstOrDefaultAsync(o => o.OrderId == orderId);
+
+            if (order == null)
+            {
+                return ServiceResult<Order>.ErrorResult($"Order with ID {orderId} not found.", StatusCodes.Status404NotFound);
+            }
+
+            var discount = await _context.Discounts.FirstOrDefaultAsync(d => d.DiscountId == discountId);
+
+            if (discount == null)
+            {
+                return ServiceResult<Order>.ErrorResult($"Discount with ID {discountId} not found.", StatusCodes.Status404NotFound);
+            }
+
+            if (discount.IsActive == false || discount.ValidFrom > DateOnly.FromDateTime(DateTime.Now) || discount.ValidTo < DateOnly.FromDateTime(DateTime.Now))
+            {
+                return ServiceResult<Order>.ErrorResult("Discount is not active or valid", StatusCodes.Status400BadRequest);
+            }
+
+            order.DiscountId = discount.DiscountId;
+
+            _context.Orders.Update(order);
+            await _context.SaveChangesAsync();
+
+            return ServiceResult<Order>.SuccessResult(order, "Order applied to product successfully", StatusCodes.Status200OK);
+        }
+
         public decimal CalculateOrderItemTotalPrice(
     string discountUnit, decimal? discountValue, int? quantity, decimal unitPrice,
     DateOnly? validFrom, DateOnly? validTo, bool? isActive, decimal? maxAmount)
